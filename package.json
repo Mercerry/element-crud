@@ -1,0 +1,48 @@
+{
+  "name": "@mercerry/element-crud",
+  "version": "0.1.0",
+  "author": "mercerry <mercerry@outlook.com>",
+  "description": "A Vue 3 and Element Plus configuration-driven CRUD component library.",
+  "type": "module",
+  "main": "dist/element-crud.umd.js",
+  "module": "dist/element-crud.es.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/element-crud.es.js",
+      "require": "./dist/element-crud.umd.js"
+    },
+    "./dist/style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "build:lib": "vue-tsc --declaration --emitDeclarationOnly --outDir dist/types --noEmit false && vite build --config vite.lib.config.ts"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.1.0",
+    "element-plus": "^2.4.0",
+    "lodash.clonedeep": "^4.5.0",
+    "vue": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/lodash.clonedeep": "^4.5.9",
+    "@types/node": "^20.0.0",
+    "@vitejs/plugin-vue": "^4.5.0",
+    "less": "^4.2.0",
+    "normalize.css": "^8.0.1",
+    "typescript": "5.3.3",
+    "vite": "^5.0.0",
+    "vue-router": "^4.2.0",
+    "vue-tsc": "^1.8.0"
+  },
+  "peerDependencies": {
+    "element-plus": "^2.4.0",
+    "vue": "^3.3.0"
+  }
+}
