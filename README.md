@@ -23,23 +23,32 @@ export all_proxy=socks5://127.0.0.1:6153
 import { createApp } from 'vue';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
-import ElementCrud from '@mercerry/element-crud';
+import DynamicCrud from '@mercerry/element-crud';
 import '@mercerry/element-crud/dist/style.css';
 
-createApp(App).use(ElementPlus).use(ElementCrud).mount('#app');
+createApp(App).use(ElementPlus).use(DynamicCrud).mount('#app');
 ```
 
 也可以按需引入：
 
 ```ts
-import { ElementCrud, CrudForm, CrudFormDialog, CrudSchemaForm } from '@mercerry/element-crud';
+import {
+  DynamicTable,
+  DynamicDetail,
+  CrudForm,
+  CrudFormDialog,
+  CrudSchemaForm,
+  useTable,
+  useForm,
+  useDialog,
+} from '@mercerry/element-crud';
 ```
 
 ## 基础示例
 
 ```vue
 <template>
-  <ElementCrud
+  <DynamicTable
     title="用户管理"
     entity-name="用户"
     :columns="columns"
@@ -102,7 +111,7 @@ import { formSchemas } from './formSchemas';
 ## 插槽模板示例
 
 ```vue
-<ElementCrud :columns="columns">
+<DynamicTable :columns="columns">
   <template #cell-status="{ row }">
     <el-tag :type="row.status === 'enabled' ? 'success' : 'danger'">
       {{ row.status }}
@@ -112,7 +121,7 @@ import { formSchemas } from './formSchemas';
   <template #toolbar-after>
     <el-button>导出</el-button>
   </template>
-</ElementCrud>
+</DynamicTable>
 ```
 
 ## TSX render 示例
@@ -171,7 +180,50 @@ async function handleSubmit(values, done) {
 }
 ```
 
-## ElementCrud Props
+## 详情组件
+
+`DynamicDetail` 基于 `el-descriptions` 封装，支持直接复用 `columns` 自动生成详情项，也支持传入独立的 `schemas` 配置。
+
+```vue
+<el-dialog v-model="detailVisible" title="用户详情" width="760px">
+  <DynamicDetail :record="detailRecord" :columns="columns" :column="2" border>
+    <template #detail-status="{ record }">
+      <el-tag :type="record.status === 'enabled' ? 'success' : 'danger'">
+        {{ record.status }}
+      </el-tag>
+    </template>
+  </DynamicDetail>
+</el-dialog>
+```
+
+```tsx
+export const detailSchemas = [
+  { field: 'username', label: '用户账号' },
+  {
+    field: 'profileProgress',
+    label: '资料完整度',
+    render: ({ value }) => <ElProgress percentage={value} />,
+  },
+];
+```
+
+## Hooks
+
+```ts
+const { tableRef, reload, openCreate, openEdit, getSearchModel } = useTable<User>();
+const { formRef, model, validate, resetFields, setFieldsValue, getFieldsValue } = useForm<User>({
+  status: 'enabled',
+});
+const detailDialog = useDialog<User>();
+```
+
+```vue
+<DynamicTable ref="tableRef" :columns="columns" :request="queryUsers" />
+<SchemaForm ref="formRef" v-model="model" :schemas="formSchemas" />
+<el-button @click="detailDialog.openDetail(row)">详情</el-button>
+```
+
+## DynamicTable Props
 
 | 参数 | 说明 | 默认值 |
 | --- | --- | --- |
@@ -200,6 +252,34 @@ async function handleSubmit(values, done) {
 | `formLabelWidth` | 弹窗表单 label 宽度 | `96` |
 | `tableProps` | 透传给 `el-table` 的属性 | `{}` |
 
+## DynamicDetail Props
+
+| 参数 | 说明 | 默认值 |
+| --- | --- | --- |
+| `record` | 当前详情数据，为空时显示空状态 | `null` |
+| `columns` | 用于自动派生详情项的表格列配置 | `[]` |
+| `schemas` | 独立详情项配置，优先级高于 `columns` | `[]` |
+| `title` | 详情标题 | `undefined` |
+| `column` | 每行展示几项 | `2` |
+| `border` | 是否显示边框 | `true` |
+| `labelWidth` | 详情项 label 宽度 | `120` |
+| `emptyText` | 无数据文案 | `暂无详情数据` |
+| `descriptionProps` | 透传给 `el-descriptions` 的参数 | `{}` |
+
+## DetailSchema 配置
+
+| 字段 | 说明 |
+| --- | --- |
+| `field` | 详情字段 |
+| `label` | 详情项名称 |
+| `span` | 跨列数量 |
+| `width` | 内容宽度 |
+| `labelWidth` | 单项 label 宽度 |
+| `hidden` | 是否隐藏，支持函数 `(record) => boolean` |
+| `props` | 透传给 `el-descriptions-item` 的参数 |
+| `formatter` | 详情值格式化函数 |
+| `render` | TSX 自定义详情项渲染函数 |
+
 ## Column 配置
 
 | 字段 | 说明 |
@@ -214,10 +294,10 @@ async function handleSubmit(values, done) {
 
 ## 搜索表单折叠
 
-`ElementCrud` 默认开启搜索项自动折叠。搜索项数量大于 `searchCollapsedItemCount` 时，初始只展示前几项，并在查询按钮旁显示 `展开/收起`。展开和收起使用 `TransitionGroup` 动画，字段进入/离开时有位移和透明度过渡。
+`DynamicTable` 默认开启搜索项自动折叠。搜索项数量大于 `searchCollapsedItemCount` 时，初始只展示前几项，并在查询按钮旁显示 `展开/收起`。展开和收起只做外层高度动画，避免字段位移和透明度动画造成抖动。
 
 ```vue
-<ElementCrud
+<DynamicTable
   :columns="columns"
   :request="queryList"
   :search-collapsible="true"

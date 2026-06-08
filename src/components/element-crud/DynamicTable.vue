@@ -1,6 +1,6 @@
 <template>
-  <section class="element-crud">
-    <div v-if="search" class="element-crud__search">
+  <section class="dynamic-table">
+    <div v-if="search" class="dynamic-table__search">
       <slot name="searchBefore" :model="searchModel" :reload="reload" />
 
       <SchemaFormBase
@@ -14,7 +14,11 @@
         @submit="handleSearch"
         @reset="handleSearchReset"
       >
-        <template v-for="slotName in forwardedSearchSlotNames" #[slotName]="slotData" :key="slotName">
+        <template
+          v-for="slotName in forwardedSearchSlotNames"
+          #[slotName]="slotData"
+          :key="slotName"
+        >
           <slot :name="slotName" v-bind="slotData || {}" />
         </template>
       </SchemaFormBase>
@@ -22,21 +26,27 @@
       <slot name="searchAfter" :model="searchModel" :reload="reload" />
     </div>
 
-    <div class="element-crud__panel">
-      <div class="element-crud__toolbar">
+    <div class="dynamic-table__panel">
+      <div class="dynamic-table__toolbar">
         <div>
           <h2 v-if="title">{{ title }}</h2>
           <p v-if="description">{{ description }}</p>
         </div>
-        <div class="element-crud__toolbar-actions">
+        <div class="dynamic-table__toolbar-actions">
           <slot name="toolbar-before" />
-          <el-button v-if="showCreate" :icon="Plus" type="primary" @click="openCreate">新增</el-button>
+          <el-button
+            v-if="showCreate"
+            :icon="Plus"
+            type="primary"
+            @click="openCreate"
+            >新增</el-button
+          >
           <el-button :icon="Refresh" @click="reload">刷新</el-button>
           <slot name="toolbar-after" />
         </div>
       </div>
 
-      <div class="element-crud__table-wrap">
+      <div class="dynamic-table__table-wrap">
         <slot name="tableBefore" :rows="tableData" :reload="reload" />
 
         <el-table
@@ -58,8 +68,19 @@
             <slot name="tableAppend" :rows="tableData" :reload="reload" />
           </template>
 
-          <el-table-column v-if="showSelection" type="selection" width="48" fixed="left" />
-          <el-table-column v-if="showIndex" type="index" label="#" width="64" fixed="left" />
+          <el-table-column
+            v-if="showSelection"
+            type="selection"
+            width="48"
+            fixed="left"
+          />
+          <el-table-column
+            v-if="showIndex"
+            type="index"
+            label="#"
+            width="64"
+            fixed="left"
+          />
 
           <el-table-column
             v-for="column in tableColumns"
@@ -84,12 +105,20 @@
                   v-if="column.render"
                   :vnode="renderCell(column, scope.row, scope.$index)"
                 />
-                <template v-else>{{ formatCell(column, scope.row, scope.$index) }}</template>
+                <template v-else>{{
+                  formatCell(column, scope.row, scope.$index)
+                }}</template>
               </slot>
             </template>
           </el-table-column>
 
-          <el-table-column v-if="showActions" label="ACTIONS" width="198" fixed="right" align="center">
+          <el-table-column
+            v-if="showActions"
+            label="ACTIONS"
+            width="198"
+            fixed="right"
+            align="center"
+          >
             <template #default="scope">
               <slot
                 name="ACTIONS"
@@ -97,11 +126,24 @@
                 :index="scope.$index"
                 :openEdit="openEdit"
                 :removeRow="removeRow"
-                :ElButtonTSX="ElButton"
-                :emitAction="(actionName: string, payload?: unknown) => emitAction(actionName, scope.row, payload)"
+                :emitAction="
+                  (actionName: string, payload?: unknown) =>
+                    emitAction(actionName, scope.row, payload)
+                "
               >
-                <el-button link type="primary" :icon="Edit" @click="openEdit(scope.row)">编辑</el-button>
-                <el-button link type="danger" :icon="Delete" @click="removeRow(scope.row)">删除</el-button>
+                <ElButton
+                  link
+                  type="primary"
+                  :icon="Edit"
+                  @click="openEdit(scope.row)"
+                  >编辑</ElButton
+                >
+                <ElButton
+                  link
+                  type="danger"
+                  :icon="Delete"
+                  @click="removeRow(scope.row)"
+                  >删除</ElButton>
               </slot>
             </template>
           </el-table-column>
@@ -110,7 +152,7 @@
         <slot name="tableAfter" :rows="tableData" :reload="reload" />
       </div>
 
-      <div v-if="pagination" class="element-crud__pagination">
+      <div v-if="pagination" class="dynamic-table__pagination">
         <el-pagination
           v-model:current-page="page"
           v-model:page-size="pageSize"
@@ -125,14 +167,20 @@
 
     <SchemaFormDialog
       v-model="dialogVisible"
-      :title="dialogMode === 'create' ? `新增${entityName}` : `编辑${entityName}`"
+      :title="
+        dialogMode === 'create' ? `新增${entityName}` : `编辑${entityName}`
+      "
       :schemas="innerFormSchemas"
       :initial-values="dialogInitialValues"
       :width="dialogWidth"
       :label-width="formLabelWidth"
       @submit="submitDialog"
     >
-      <template v-for="slotName in forwardedDialogSlotNames" #[slotName]="slotData" :key="slotName">
+      <template
+        v-for="slotName in forwardedDialogSlotNames"
+        #[slotName]="slotData"
+        :key="slotName"
+      >
         <slot :name="`dialog-${slotName}`" v-bind="slotData || {}" />
       </template>
     </SchemaFormDialog>
@@ -140,11 +188,11 @@
 </template>
 
 <script setup lang="ts" generic="T extends CrudRecord">
-import { computed, defineComponent, onMounted, reactive, ref } from 'vue';
-import { ElButton, ElMessage, ElMessageBox } from 'element-plus';
-import { Delete, Edit, Plus, Refresh } from '@element-plus/icons-vue';
-import SchemaFormBase from './SchemaFormBase.vue';
-import SchemaFormDialog from './SchemaFormDialog.vue';
+import { computed, defineComponent, onMounted, reactive, ref } from "vue";
+import { ElMessage, ElMessageBox, ElButton } from "element-plus";
+import { Delete, Edit, Plus, Refresh } from "@element-plus/icons-vue";
+import SchemaFormBase from "./SchemaFormBase.vue";
+import SchemaFormDialog from "./SchemaFormDialog.vue";
 import type {
   CrudColumn,
   CrudCreate,
@@ -153,10 +201,14 @@ import type {
   CrudRemove,
   CrudRequest,
   CrudUpdate,
-} from './types';
+} from "./types";
+
+defineOptions({
+  name: "DynamicTable",
+});
 
 const RenderNode = defineComponent({
-  name: 'RenderNode',
+  name: "RenderNode",
   props: {
     vnode: {
       type: [Object, String, Number],
@@ -198,8 +250,8 @@ const props = withDefaults(
     tableProps?: Record<string, any>;
   }>(),
   {
-    entityName: '数据',
-    rowKey: 'id',
+    entityName: "数据",
+    rowKey: "id",
     search: true,
     pagination: true,
     pageSizes: () => [10, 20, 50, 100],
@@ -233,44 +285,46 @@ const total = ref(0);
 const page = ref(1);
 const pageSize = ref(props.defaultPageSize);
 const dialogVisible = ref(false);
-const dialogMode = ref<'create' | 'edit'>('create');
+const dialogMode = ref<"create" | "edit">("create");
 const editingRow = ref<T>();
 const searchModel = reactive<CrudRecord>({});
 
 const forwardedSearchSlotNames = [
-  'formBefore',
-  'fieldsBefore',
-  'fieldsAfter',
-  'actions',
-  'actionsBefore',
-  'advanceBefore',
-  'submitBefore',
-  'resetBefore',
-  'actionsAfter',
-  'formAfter',
+  "formBefore",
+  "fieldsBefore",
+  "fieldsAfter",
+  "actions",
+  "actionsBefore",
+  "advanceBefore",
+  "submitBefore",
+  "resetBefore",
+  "actionsAfter",
+  "formAfter",
 ] as const;
 
 const forwardedDialogSlotNames = [
-  'header',
-  'dialogBefore',
-  'formBefore',
-  'fieldsBefore',
-  'fieldsAfter',
-  'actions',
-  'actionsBefore',
-  'advanceBefore',
-  'submitBefore',
-  'resetBefore',
-  'actionsAfter',
-  'formAfter',
-  'dialogAfter',
-  'footer',
+  "header",
+  "dialogBefore",
+  "formBefore",
+  "fieldsBefore",
+  "fieldsAfter",
+  "actions",
+  "actionsBefore",
+  "advanceBefore",
+  "submitBefore",
+  "resetBefore",
+  "actionsAfter",
+  "formAfter",
+  "dialogAfter",
+  "footer",
 ] as const;
 
-const tableColumns = computed(() => props.columns.filter((column) => !column.hideInTable));
+const tableColumns = computed(() =>
+  props.columns.filter((column) => !column.hideInTable),
+);
 const resolvedTableProps = computed(() => props.tableProps);
 const tableStyle = computed(() => ({
-  width: '100%',
+  width: "100%",
   minWidth: `${tableMinWidth.value}px`,
 }));
 const tableMinWidth = computed(() => {
@@ -292,8 +346,8 @@ const searchSchemas = computed<CrudFormSchema<T>[]>(() =>
     .map((column) => ({
       field: column.prop,
       label: column.label,
-      component: 'Input',
-      ...(typeof column.search === 'object' ? column.search : {}),
+      component: "Input",
+      ...(typeof column.search === "object" ? column.search : {}),
     })),
 );
 
@@ -307,12 +361,14 @@ const innerFormSchemas = computed<CrudFormSchema<T>[]>(() => {
     .map((column) => ({
       field: column.prop,
       label: column.label,
-      component: 'Input',
-      ...(typeof column.form === 'object' ? column.form : {}),
+      component: "Input",
+      ...(typeof column.form === "object" ? column.form : {}),
     }));
 });
 
-const dialogInitialValues = computed(() => (dialogMode.value === 'edit' ? editingRow.value || {} : {}));
+const dialogInitialValues = computed(() =>
+  dialogMode.value === "edit" ? editingRow.value || {} : {},
+);
 
 initModel(searchModel, searchSchemas.value);
 
@@ -340,7 +396,7 @@ function formatCell(column: CrudColumn<T>, row: T, index: number) {
     return column.formatter(row, value, index);
   }
 
-  return value ?? '-';
+  return value ?? "-";
 }
 
 function renderCell(column: CrudColumn<T>, row: T, index: number) {
@@ -356,7 +412,7 @@ function getCellValue(column: CrudColumn<T>, row: T) {
 }
 
 function emitAction(actionName: string, row: T, payload?: unknown) {
-  emit('action', actionName, row, payload);
+  emit("action", actionName, row, payload);
 }
 
 async function reload() {
@@ -376,7 +432,7 @@ async function reload() {
     });
     tableData.value = result.list;
     total.value = result.total;
-    emit('loaded', result.list, result.total);
+    emit("loaded", result.list, result.total);
   } finally {
     loading.value = false;
   }
@@ -394,30 +450,33 @@ function handleSearchReset(value: CrudRecord) {
 }
 
 function openCreate() {
-  dialogMode.value = 'create';
+  dialogMode.value = "create";
   editingRow.value = undefined;
   dialogVisible.value = true;
 }
 
 function openEdit(row: T) {
-  dialogMode.value = 'edit';
+  dialogMode.value = "edit";
   editingRow.value = row;
   dialogVisible.value = true;
 }
 
-async function submitDialog(values: Partial<T>, done: (shouldClose?: boolean) => void) {
+async function submitDialog(
+  values: Partial<T>,
+  done: (shouldClose?: boolean) => void,
+) {
   let shouldClose = false;
 
   try {
-    if (dialogMode.value === 'create') {
+    if (dialogMode.value === "create") {
       await props.create?.(values);
-      emit('created', values);
-      ElMessage.success('新增成功');
+      emit("created", values);
+      ElMessage.success("新增成功");
       shouldClose = true;
     } else if (editingRow.value) {
       await props.update?.(values, editingRow.value);
-      emit('updated', values, editingRow.value);
-      ElMessage.success('编辑成功');
+      emit("updated", values, editingRow.value);
+      ElMessage.success("编辑成功");
       shouldClose = true;
     }
 
@@ -431,15 +490,15 @@ async function submitDialog(values: Partial<T>, done: (shouldClose?: boolean) =>
 }
 
 async function removeRow(row: T) {
-  await ElMessageBox.confirm('确定要删除这条数据吗？', '删除确认', {
-    type: 'warning',
-    confirmButtonText: '删除',
-    cancelButtonText: '取消',
+  await ElMessageBox.confirm("确定要删除这条数据吗？", "删除确认", {
+    type: "warning",
+    confirmButtonText: "删除",
+    cancelButtonText: "取消",
   });
 
   await props.remove?.(row);
-  emit('removed', row);
-  ElMessage.success('删除成功');
+  emit("removed", row);
+  ElMessage.success("删除成功");
   await reload();
 }
 
@@ -452,28 +511,28 @@ defineExpose({
 </script>
 
 <style lang="less" scoped>
-.element-crud {
+.dynamic-table {
   display: grid;
   gap: 14px;
 }
 
-.element-crud__search,
-.element-crud__panel {
+.dynamic-table__search,
+.dynamic-table__panel {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
 }
 
-.element-crud__search {
+.dynamic-table__search {
   padding: 18px 18px 0;
 }
 
-.element-crud__panel {
+.dynamic-table__panel {
   padding: 18px;
   min-width: 0;
 }
 
-.element-crud__toolbar {
+.dynamic-table__toolbar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -493,14 +552,14 @@ defineExpose({
   }
 }
 
-.element-crud__toolbar-actions {
+.dynamic-table__toolbar-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
 }
 
-.element-crud__table-wrap {
+.dynamic-table__table-wrap {
   min-width: 0;
   overflow-x: auto;
 }
@@ -509,18 +568,18 @@ defineExpose({
   min-width: 960px;
 }
 
-.element-crud__pagination {
+.dynamic-table__pagination {
   display: flex;
   justify-content: flex-end;
   margin-top: 14px;
 }
 
 @media (max-width: 760px) {
-  .element-crud__toolbar {
+  .dynamic-table__toolbar {
     display: block;
   }
 
-  .element-crud__toolbar-actions {
+  .dynamic-table__toolbar-actions {
     justify-content: flex-start;
     margin-top: 12px;
   }

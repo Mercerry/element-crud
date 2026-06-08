@@ -60,6 +60,24 @@ export interface CrudColumn<T extends CrudRecord = CrudRecord> {
   form?: false | Partial<CrudFormSchema<T>>;
 }
 
+export interface CrudDetailSchema<T extends CrudRecord = CrudRecord> {
+  field: Extract<keyof T, string> | string;
+  label: string;
+  span?: number;
+  width?: string | number;
+  labelWidth?: string | number;
+  hidden?: boolean | ((record: Partial<T> | CrudRecord) => boolean);
+  props?: Record<string, any>;
+  formatter?: (record: T, value: any, index: number) => string | number;
+  render?: (params: {
+    record: T;
+    value: any;
+    index: number;
+    schema: CrudDetailSchema<T>;
+    field: string;
+  }) => VNode | string | number;
+}
+
 export interface CrudRequestParams {
   page: number;
   pageSize: number;
@@ -89,11 +107,28 @@ export type CrudUpdate<T extends CrudRecord = CrudRecord> = (
 
 export type CrudRemove<T extends CrudRecord = CrudRecord> = (row: T) => Promise<void> | void;
 
-export interface CrudExpose<T extends CrudRecord = CrudRecord> {
+export interface DynamicTableExpose<T extends CrudRecord = CrudRecord> {
   reload: () => Promise<void>;
   openCreate: () => void;
   openEdit: (row: T) => void;
   getSearchModel: () => CrudRecord;
+}
+
+export type CrudExpose<T extends CrudRecord = CrudRecord> = DynamicTableExpose<T>;
+
+export interface SchemaFormExpose {
+  validate: () => Promise<unknown> | undefined;
+  resetFields: () => Promise<void> | undefined;
+  setFieldsValue: (value: CrudRecord) => void | undefined;
+  getFieldsValue: () => CrudRecord | undefined;
+}
+
+export interface SchemaFormDialogExpose {
+  submit: () => Promise<void>;
+  close: () => void;
+  cancel: () => void;
+  setFieldsValue: (value: CrudRecord) => void | undefined;
+  getFieldsValue: () => CrudRecord | undefined;
 }
 
 export type CrudCellRender<T extends CrudRecord = CrudRecord> = (scope: {

@@ -1,5 +1,6 @@
 <template>
-  <ElementCrud
+  <DynamicTable
+    ref="tableRef"
     title="用户管理"
     description="使用本地 mock 数据模拟真实 CRUD，分页和搜索参数会传入 request。"
     entity-name="用户"
@@ -13,8 +14,8 @@
     show-selection
     @action="handleTableAction"
   >
-    <template #submitBefore="{ model }">
-      <el-tag type="info">关键词：{{ model.username || '全部' }}</el-tag>
+    <template #submitBefore>
+      <el-tag type="info">模板插槽示例</el-tag>
     </template>
 
     <!-- 插槽模板示例：使用 cell-{prop} 覆盖 columns 的默认渲染。 -->
@@ -28,16 +29,44 @@
       </el-tag>
     </template>
 
-    <template #ACTIONS="{ row, ElButtonTSX, openEdit, removeRow, emitAction }">
-      <component :is="ElButtonTSX" link type="primary" @click="openEdit(row)">编辑</component>
-      <component :is="ElButtonTSX" link type="danger" @click="removeRow(row)">删除</component>
-      <component :is="ElButtonTSX" link @click="emitAction('detail', { id: row.id })">详情</component>
+    <template #ACTIONS="{ row, openEdit, removeRow, emitAction }">
+      <ElButton link type="primary" @click="openEdit(row)">编辑</ElButton>
+      <ElButton link type="danger" @click="removeRow(row)">删除</ElButton>
+      <ElButton link @click="emitAction('detail', { id: row.id })">详情</ElButton>
     </template>
 
     <template #toolbar-after>
-      <el-button @click="openStandaloneDialog">独立弹窗表单</el-button>
+      <ElButton @click="reloadTable">Hook 刷新</ElButton>
+      <ElButton @click="() => openStandaloneDialog()">独立弹窗表单</ElButton>
     </template>
-  </ElementCrud>
+  </DynamicTable>
+
+  <el-dialog v-model="detailVisible" title="用户详情" width="760px">
+    <DynamicDetail
+      :record="detailRecord"
+      :columns="columns"
+      :column="2"
+      border
+    >
+      <template #detail-deptId="{ record }">
+        {{ formatDeptCell(record) }}
+      </template>
+
+      <template #detail-status="{ record }">
+        <el-tag :type="record.status === 'enabled' ? 'success' : 'danger'">
+          {{ formatStatusCell(record) }}
+        </el-tag>
+      </template>
+
+      <template #detail-profileProgress="{ value }">
+        <el-progress :percentage="value" :stroke-width="8" />
+      </template>
+    </DynamicDetail>
+
+    <template #footer>
+      <ElButton @click="closeDetailDialog">关闭</ElButton>
+    </template>
+  </el-dialog>
 
   <SchemaFormDialog
     v-model="standaloneVisible"
@@ -53,9 +82,14 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
-import { ElMessage } from 'element-plus';
-import { SchemaFormDialog } from '@/components/element-crud';
+import { ElButton, ElMessage } from 'element-plus';
+import {
+  DynamicDetail,
+  DynamicTable,
+  SchemaFormDialog,
+  useDialog,
+  useTable,
+} from '@/components/element-crud';
 import { columns, formatDeptCell, formatStatusCell } from './columns';
 import { formSchemas } from './formSchemas';
 import {
@@ -66,24 +100,30 @@ import {
   type MockUser,
 } from './mockUserService';
 
-const standaloneVisible = ref(false);
-const standaloneInitialValues = reactive<Partial<MockUser>>({
+const { tableRef, reload: reloadTable } = useTable<MockUser>();
+const {
+  visible: detailVisible,
+  record: detailRecord,
+  openDetail: openDetailDialog,
+  close: closeDetailDialog,
+} = useDialog<MockUser>();
+const {
+  visible: standaloneVisible,
+  initialValues: standaloneInitialValues,
+  openCreate: openStandaloneDialog,
+} = useDialog<MockUser>({
   status: 'enabled',
   role: 'operator',
   deptId: 1,
   profileProgress: 80,
 });
 
-function openStandaloneDialog() {
-  standaloneVisible.value = true;
-}
-
-function handleTableAction(actionName: string, row: MockUser, payload?: unknown) {
+function handleTableAction(actionName: string, row: MockUser) {
   if (actionName !== 'detail') {
     return;
   }
 
-  ElMessage.info(`查看详情: ${row.username} (${JSON.stringify(payload)})`);
+  openDetailDialog(row);
 }
 
 async function handleStandaloneSubmit(

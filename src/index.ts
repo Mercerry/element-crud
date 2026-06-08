@@ -1,12 +1,15 @@
 import type { App } from 'vue';
-import ElementCrud from './components/element-crud/ElementCrud.vue';
+import DynamicTable from './components/element-crud/DynamicTable.vue';
+import DynamicDetail from './components/element-crud/DynamicDetail.vue';
 import SchemaForm from './components/element-crud/SchemaForm.vue';
 import SchemaFormDialog from './components/element-crud/SchemaFormDialog.vue';
 import SchemaFormBase from './components/element-crud/SchemaFormBase.vue';
 
 export * from './components/element-crud/types';
+export * from './components/element-crud/hooks';
 export {
-  ElementCrud,
+  DynamicTable,
+  DynamicDetail,
   SchemaForm,
   SchemaFormDialog,
   SchemaFormBase,
@@ -17,7 +20,8 @@ export {
 
 export default {
   install(app: App) {
-    app.component('ElementCrud', ElementCrud);
+    app.component('DynamicTable', DynamicTable);
+    app.component('DynamicDetail', DynamicDetail);
     app.component('SchemaForm', SchemaForm);
     app.component('SchemaFormDialog', SchemaFormDialog);
     app.component('SchemaFormBase', SchemaFormBase);

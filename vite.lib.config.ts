@@ -18,7 +18,7 @@ export default defineConfig({
     emptyOutDir: false,
     lib: {
       entry: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
-      name: 'ElementCrud',
+      name: 'DynamicCrud',
       fileName: (format) => `element-crud.${format}.js`,
     },
     rollupOptions: {

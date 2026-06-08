@@ -545,6 +545,34 @@ defineExpose({
 
   :deep(.el-form-item) {
     padding: 0 8px;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  :deep(.el-form-item__content) {
+    min-width: 0;
+  }
+
+  :deep(.el-input),
+  :deep(.el-input-number),
+  :deep(.el-select),
+  :deep(.el-tree-select),
+  :deep(.el-cascader),
+  :deep(.el-date-editor),
+  :deep(.el-time-select),
+  :deep(.el-slider),
+  :deep(.el-rate),
+  :deep(.el-color-picker),
+  :deep(.el-progress) {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  :deep(.el-select__wrapper),
+  :deep(.el-tree-select__wrapper),
+  :deep(.el-input__wrapper) {
+    width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -589,26 +617,6 @@ defineExpose({
   :deep(.el-form-item__content) {
     width: 100%;
     min-width: 0;
-  }
-
-  :deep(.el-input),
-  :deep(.el-input-number),
-  :deep(.el-select),
-  :deep(.el-tree-select),
-  :deep(.el-cascader),
-  :deep(.el-date-editor),
-  :deep(.el-time-select),
-  :deep(.el-slider),
-  :deep(.el-rate),
-  :deep(.el-color-picker),
-  :deep(.el-progress) {
-    width: 100%;
-  }
-
-  :deep(.el-select__wrapper),
-  :deep(.el-tree-select__wrapper),
-  :deep(.el-input__wrapper) {
-    width: 100%;
   }
 }
 

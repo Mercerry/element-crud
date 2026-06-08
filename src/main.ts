@@ -4,6 +4,6 @@ import 'normalize.css';
 import 'element-plus/dist/index.css';
 import './styles/app.less';
 import App from './App.vue';
-import ElementCrud from './index';
+import DynamicCrud from './index';
 
-createApp(App).use(ElementPlus).use(ElementCrud).mount('#app');
+createApp(App).use(ElementPlus).use(DynamicCrud).mount('#app');

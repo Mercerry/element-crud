@@ -1,6 +1,6 @@
 # 使用说明
 
-`ElementCrud` 的目标是减少后台管理页面重复代码。推荐把页面拆成三块：
+`DynamicTable` 的目标是减少后台管理页面重复代码。推荐把页面拆成三块：
 
 1. `columns`：定义表格列、搜索项、表单项。
 2. `request/create/update/remove`：定义数据动作，mock 或真实接口都可以。
@@ -34,19 +34,19 @@
 按字段名声明插槽：
 
 ```vue
-<ElementCrud :columns="columns">
+<DynamicTable :columns="columns">
   <template #cell-status="{ row }">
     <el-tag :type="row.status === 'enabled' ? 'success' : 'danger'">
       {{ row.status }}
     </el-tag>
   </template>
-</ElementCrud>
+</DynamicTable>
 ```
 
 ## 操作列插槽
 
 ```vue
-<template #actions="{ row, openEdit, removeRow }">
+<template #ACTIONS="{ row, openEdit, removeRow }">
   <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
   <el-button link type="danger" @click="removeRow(row)">删除</el-button>
 </template>
@@ -115,6 +115,53 @@ async function handleSubmit(values, done) {
 }
 ```
 
+## 详情组件
+
+`DynamicDetail` 可以直接复用 `columns`，也可以传 `schemas` 单独配置详情项。
+
+```vue
+<el-dialog v-model="detailVisible" title="用户详情" width="760px">
+  <DynamicDetail :record="detailRecord" :columns="columns" :column="2" border>
+    <template #detail-status="{ record }">
+      <el-tag :type="record.status === 'enabled' ? 'success' : 'danger'">
+        {{ record.status }}
+      </el-tag>
+    </template>
+  </DynamicDetail>
+</el-dialog>
+```
+
+```tsx
+export const detailSchemas = [
+  { field: 'username', label: '用户账号' },
+  {
+    field: 'profileProgress',
+    label: '资料完整度',
+    render: ({ value }) => <ElProgress percentage={value} />,
+  },
+];
+```
+
+## Hooks
+
+| hook | 说明 |
+| --- | --- |
+| `useTable<T>()` | 返回 `tableRef`、`reload`、`openCreate`、`openEdit`、`getSearchModel` |
+| `useForm<T>(initialValues?)` | 返回 `formRef`、`model`、`validate`、`resetFields`、`setFieldsValue`、`getFieldsValue` |
+| `useDialog<T>(defaultValues?)` | 返回 `visible`、`mode`、`record`、`initialValues`、`openCreate`、`openEdit`、`openDetail`、`close` |
+
+```ts
+const { tableRef, reload } = useTable<User>();
+const { formRef, model, validate } = useForm<User>({ status: 'enabled' });
+const detailDialog = useDialog<User>();
+```
+
+```vue
+<DynamicTable ref="tableRef" :columns="columns" :request="queryUsers" />
+<SchemaForm ref="formRef" v-model="model" :schemas="formSchemas" />
+<el-button @click="detailDialog.openDetail(row)">详情</el-button>
+```
+
 ## 暴露方法
 
 通过 `ref` 可以调用：
@@ -169,7 +216,7 @@ async function handleSubmit(values, done) {
 
 ## 搜索表单折叠
 
-`ElementCrud` 默认开启自动折叠：
+`DynamicTable` 默认开启自动折叠：
 
 | 参数 | 说明 | 默认值 |
 | --- | --- | --- |
@@ -177,10 +224,10 @@ async function handleSubmit(values, done) {
 | `searchDefaultCollapsed` | 首次渲染是否默认收起 | `true` |
 | `searchCollapsedItemCount` | 收起状态展示几个搜索项 | `3` |
 
-超过 `searchCollapsedItemCount` 的搜索项会被自动收起，点击 `展开/收起` 后通过动画进入或离开。
+超过 `searchCollapsedItemCount` 的搜索项会被自动收起，点击 `展开/收起` 后只做外层高度动画。
 
 ```vue
-<ElementCrud
+<DynamicTable
   :columns="columns"
   :request="queryList"
   :search-collapsible="true"
