@@ -319,8 +319,14 @@ const fieldsWrapperStyle = computed(() => {
 watch(
   () => props.modelValue,
   (value) => {
+    const nextValue = normalizeModelValue(value || {});
+
+    if (isSameModel(innerModel, nextValue)) {
+      return;
+    }
+
     Object.keys(innerModel).forEach((key) => delete innerModel[key]);
-    Object.assign(innerModel, value || {});
+    Object.assign(innerModel, nextValue);
   },
   { immediate: true, deep: true },
 );
@@ -328,7 +334,12 @@ watch(
 watch(
   innerModel,
   (value) => {
-    emit('update:modelValue', { ...value });
+    const nextValue = { ...value };
+
+    // 父子表单都使用深度监听时，只有值真正变化才回传，避免相互赋值形成更新循环。
+    if (!isSameModel(nextValue, props.modelValue || {})) {
+      emit('update:modelValue', nextValue);
+    }
   },
   { deep: true },
 );
@@ -350,6 +361,35 @@ function resolveComponent(schema: CrudFormSchema) {
 
 function hasOptions(schema: CrudFormSchema) {
   return schema.component === 'Select';
+}
+
+function normalizeInputNumber(value: unknown) {
+  if (value === '' || value === null || value === undefined) {
+    return undefined;
+  }
+
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : undefined;
+}
+
+function normalizeModelValue(value: CrudRecord) {
+  const nextValue = { ...value };
+
+  // 接口或表格数据可能把数字序列化为字符串，统一转换后再交给 el-input-number。
+  props.schemas.forEach((schema) => {
+    const field = String(schema.field);
+    if (schema.component === 'InputNumber' && Object.prototype.hasOwnProperty.call(nextValue, field)) {
+      nextValue[field] = normalizeInputNumber(nextValue[field]);
+    }
+  });
+
+  return nextValue;
+}
+
+function isSameModel(left: CrudRecord, right: CrudRecord) {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  return leftKeys.length === rightKeys.length && leftKeys.every((key) => left[key] === right[key]);
 }
 
 function renderSchema(schema: CrudFormSchema) {
@@ -516,13 +556,16 @@ async function submit() {
 async function reset() {
   await formRef.value?.resetFields();
   props.schemas.forEach((schema) => {
-    innerModel[String(schema.field)] = schema.defaultValue ?? undefined;
+    const defaultValue = schema.defaultValue ?? undefined;
+    innerModel[String(schema.field)] = schema.component === 'InputNumber'
+      ? normalizeInputNumber(defaultValue)
+      : defaultValue;
   });
   emit('reset', { ...innerModel });
 }
 
 function setFieldsValue(value: CrudRecord) {
-  Object.assign(innerModel, value);
+  Object.assign(innerModel, normalizeModelValue(value));
 }
 
 function getFieldsValue() {

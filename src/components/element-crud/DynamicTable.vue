@@ -114,7 +114,7 @@
 
           <el-table-column
             v-if="showActions"
-            label="ACTIONS"
+            label="操作"
             width="198"
             fixed="right"
             align="center"
