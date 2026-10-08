@@ -1,20 +1,12 @@
 # Element CRUD
 
-基于 Vue 3 + Element Plus 的配置式 CRUD 组件库。实现思路参考 `data-security-pool-web` 中动态表格和 Schema Form 的模式：页面只维护列配置、表单配置和数据方法，组件统一处理搜索、表格、分页、弹窗表单、增删改刷新。
+基于 Vue 3 + Element Plus 的配置式 CRUD 组件库。页面只维护列配置、表单配置和数据方法，组件统一处理搜索、表格、分页、弹窗表单、增删改刷新。
 
 ## 快速启动
 
 ```bash
 npm install
 npm run dev
-```
-
-如果网络不通，可以按项目要求配置代理后再安装依赖：
-
-```bash
-export https_proxy=http://127.0.0.1:6152
-export http_proxy=http://127.0.0.1:6152
-export all_proxy=socks5://127.0.0.1:6153
 ```
 
 ## 组件注册
