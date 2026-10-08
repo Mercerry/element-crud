@@ -411,7 +411,7 @@ const detailDialog = useDialog<User>();
 | `ColorPicker`                          | `el-color-picker`   | [Color Picker](https://element-plus.org/en-US/component/color-picker) |
 | `Progress`                             | `el-progress`       | [Progress](https://element-plus.org/en-US/component/progress)         |
 
-### 0.2.0 接入更新
+### 0.2.1 接入更新
 
 - 搜索、编辑统一 Element Layout，默认两列，xs 单列；通过 span/colProps/gutter 调整。
 - component 与原生 props 联动检查，业务可扩展 CrudFieldProps。

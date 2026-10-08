@@ -264,7 +264,7 @@ const detailDialog = useDialog<User>();
 - 默认显示查询和重置；字段值变化不主动提交。显式配置在 `schema.props` 中的业务事件仍由调用方负责，不会被库拦截或删除。重置继续采用 `schema.defaultValue`。
 - 使用方不要用 `height: auto !important`、`transition: none !important` 覆盖字段容器；行间距由组件提供。
 
-### 0.2.0 接入能力
+### 0.2.1 接入能力
 
 - `DynamicTable` 支持 `data` 本地模式和 `request` 远程模式，共用列、选择事件、原生表格实例与插槽。`plain` 移除面板装饰，`showToolbar=false` 隐藏工具栏，`fitContainer` 允许表格随宿主容器收缩；这些布局选项均为可选项。
 - 列支持 `type`、`headerRender`、`columnProps`，可通过 `getElTableInstance`、`clearSelection`、`toggleRowSelection` 操作原生表格。
@@ -274,7 +274,7 @@ const detailDialog = useDialog<User>();
 - `SchemaFormDialog` 的 `mode="drawer"` 与默认 dialog 共用草稿、校验、提交锁和完成回调；`busy` 可接入外部加载状态。更新 schema/字典选项不会覆盖正在编辑的草稿；旧会话的完成回调不能关闭新打开的窗口。
 - 搜索折叠默认启用，传 `searchCollapsible=false` 才禁用。首次挂载、字段配置切换和 KeepAlive 激活在当前渲染轮次测量，不再先显示多余按钮、下一帧才隐藏。窗口连续缩放仍通过 RAF 合并测量。
 
-白泽 Web / Electron 已接入同一份 0.2.0 固定安装包，移除了 `useSearchFormWidth`、`SearchCollapseSync` 和本地表格重复列实现。字典、权限、业务字段组件仍在共享业务适配层。尚未发布到 npm；发布后应同时更新三个依赖入口和锁文件。
+白泽 Web / Electron 已接入同一份 0.2.1 固定安装包，移除了 `useSearchFormWidth`、`SearchCollapseSync` 和本地表格重复列实现。字典、权限、业务字段组件仍在共享业务适配层。尚未发布到 npm；发布后应同时更新三个依赖入口和锁文件。
 
 验证范围与命令记录见白泽仓库 `docs/element-crud接入优化说明.md`。库执行类型声明和示例构建；接入端执行共享业务测试、类型检查、静态检查和两端构建。真实后端及 Electron 原生窗口未纳入此次隔离组件验证。
 
@@ -333,7 +333,7 @@ const schemas = [
 - 弹窗可传 `submitRequest: async values => { await save(values) }`。该模式取代 submit/done 保存入口，公开 submit 等待保存结束；失败发出 submitError 并恢复可提交状态，原 callback 模式仍保持兼容。
 - 开发使用 Node 22.13+、pnpm 10；`pnpm check` 执行类型、Lint、格式、模型与组件回归测试、声明与库构建。`pnpm build` 单独构建示例。
 
-## 0.2.0：类型、文案和主题配置
+## 0.2.1：类型、文案和主题配置
 
 `CrudFormSchema` 按 component 判别 props：Select 提示 Select 原生属性和事件，InputNumber 提示数字框属性；传错属性或值类型会报错。省略 component 按 Input 检查；自定义 Vue 组件可传属性对象，其精确泛型契约请在 render/TSX 内检查。
 
