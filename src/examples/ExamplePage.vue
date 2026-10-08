@@ -32,7 +32,9 @@
     <template #ACTIONS="{ row, openEdit, removeRow, emitAction }">
       <ElButton link type="primary" @click="openEdit(row)">编辑</ElButton>
       <ElButton link type="danger" @click="removeRow(row)">删除</ElButton>
-      <ElButton link @click="emitAction('detail', { id: row.id })">详情</ElButton>
+      <ElButton link @click="emitAction('detail', { id: row.id })"
+        >详情</ElButton
+      >
     </template>
 
     <template #toolbar-after>
@@ -42,12 +44,7 @@
   </DynamicTable>
 
   <el-dialog v-model="detailVisible" title="用户详情" width="760px">
-    <DynamicDetail
-      :record="detailRecord"
-      :columns="columns"
-      :column="2"
-      border
-    >
+    <DynamicDetail :record="detailRecord" :columns="columns" :column="2" border>
       <template #detail-deptId="{ record }">
         {{ formatDeptCell(record) }}
       </template>
@@ -76,7 +73,11 @@
     @submit="handleStandaloneSubmit"
   >
     <template #dialogBefore>
-      <el-alert title="这是一个可独立使用的弹窗表单。" type="info" :closable="false" />
+      <el-alert
+        title="这是一个可独立使用的弹窗表单。"
+        type="info"
+        :closable="false"
+      />
     </template>
   </SchemaFormDialog>
 </template>

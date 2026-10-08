@@ -1,6 +1,6 @@
 <template>
   <div class="dynamic-detail">
-    <el-empty v-if="!record" :description="emptyText" />
+    <el-empty v-if="!record" :description="emptyText ?? locale.emptyDetail" />
 
     <el-descriptions
       v-else
@@ -15,7 +15,8 @@
         :key="String(schema.field)"
         :label="schema.label"
         :span="schema.span"
-        :label-width="schema.labelWidth || labelWidth"
+        :width="schema.width"
+        :label-width="schema.labelWidth ?? labelWidth"
         v-bind="schema.props"
       >
         <slot
@@ -37,6 +38,9 @@
 </template>
 
 <script setup lang="ts" generic="T extends CrudRecord">
+import { useCrudLocale } from './config';
+import { getField } from './model';
+import { ElEmpty, ElDescriptions, ElDescriptionsItem } from 'element-plus';
 import { computed, defineComponent } from 'vue';
 import type { CrudColumn, CrudDetailSchema, CrudRecord } from './types';
 
@@ -57,6 +61,8 @@ const RenderNode = defineComponent({
   },
 });
 
+const locale = useCrudLocale();
+
 const props = withDefaults(
   defineProps<{
     record?: T | null;
@@ -67,6 +73,7 @@ const props = withDefaults(
     border?: boolean;
     labelWidth?: string | number;
     emptyText?: string;
+    reuseTableRender?: boolean;
     descriptionProps?: Record<string, any>;
   }>(),
   {
@@ -76,7 +83,7 @@ const props = withDefaults(
     column: 2,
     border: true,
     labelWidth: 120,
-    emptyText: '暂无详情数据',
+    reuseTableRender: true,
     descriptionProps: () => ({}),
   },
 );
@@ -88,14 +95,17 @@ const detailSchemas = computed<CrudDetailSchema<T>[]>(() => {
 
   // 不额外写详情配置时，默认复用当前表格列，保证示例和业务页面都能快速打开详情。
   return props.columns
-    .filter((column) => !column.hideInTable)
+    .filter((column) => !column.hideInTable && column.detail !== false)
     .map((column) => ({
       field: column.prop,
       label: column.label,
       formatter: column.formatter,
-      render: column.render
-        ? ({ record, value, index }) => column.render!({ row: record, value, index })
-        : undefined,
+      render:
+        props.reuseTableRender && column.render
+          ? ({ record, value, index }) =>
+              column.render!({ row: record, value, index })
+          : undefined,
+      ...(typeof column.detail === 'object' ? column.detail : {}),
     }));
 });
 
@@ -110,7 +120,7 @@ const visibleSchemas = computed(() =>
 );
 
 function getDetailValue(schema: CrudDetailSchema<T>) {
-  return props.record?.[String(schema.field)];
+  return getField(props.record, String(schema.field));
 }
 
 function formatDetail(schema: CrudDetailSchema<T>, index: number) {
@@ -141,7 +151,7 @@ function renderDetail(schema: CrudDetailSchema<T>, index: number) {
   overflow-x: hidden;
 
   :deep(.el-descriptions__body) {
-    background: #fff;
+    background: var(--crud-background, var(--el-bg-color, #fff));
     max-width: 100%;
     overflow-x: hidden;
   }
@@ -161,13 +171,13 @@ function renderDetail(schema: CrudDetailSchema<T>, index: number) {
   }
 
   :deep(.el-descriptions__label) {
-    color: #475569;
+    color: var(--crud-text-secondary, var(--el-text-color-regular, #475569));
     font-weight: 600;
     white-space: nowrap;
   }
 
   :deep(.el-descriptions__content) {
-    color: #0f172a;
+    color: var(--crud-text-primary, var(--el-text-color-primary, #0f172a));
     min-width: 0;
     overflow-wrap: anywhere;
     word-break: break-word;

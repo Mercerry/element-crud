@@ -2,7 +2,11 @@
   <el-form
     ref="formRef"
     class="crud-schema-form"
-    :class="{ 'crud-schema-form--inline': inline }"
+    :class="{
+      'crud-schema-form--inline': inline,
+      'crud-schema-form--contents': fieldsLayout === 'contents',
+      'crud-schema-form--grid': useGrid,
+    }"
     :inline="inline"
     :model="innerModel"
     :label-width="labelWidth"
@@ -20,10 +24,11 @@
     <div
       ref="fieldsWrapperRef"
       class="crud-schema-form__fields-wrapper"
-      :class="{ 'crud-schema-form__fields-wrapper--animating': isHeightAnimating }"
+      :class="{
+        'crud-schema-form__fields-wrapper--animating': isHeightAnimating,
+      }"
       :style="fieldsWrapperStyle"
       @transitionend="handleHeightTransitionEnd"
-      @transitioncancel="resetHeightAnimation"
     >
       <div ref="fieldsContentRef" class="crud-schema-form__fields-content">
         <slot
@@ -35,76 +40,109 @@
           :isCollapsed="isCollapsed"
         />
 
-        <div
+        <component
+          :is="useGrid ? ElRow : 'div'"
+          :gutter="useGrid ? gutter : undefined"
           class="crud-schema-form__fields"
           :class="{ 'crud-schema-form__fields--inline': inline }"
         >
-          <el-form-item
-            v-for="schema in displaySchemas"
+          <LayoutColumn
+            v-for="(schema, index) in visibleSchemas"
+            :grid="useGrid"
+            :column="{
+              span: schema.span ?? (schema.kind === 'content' ? 24 : 12),
+              xs: 24,
+              ...schema.colProps,
+            }"
+            :hidden="
+              schema.visible === false ||
+              (isCollapsed && index >= effectiveCollapsedCount)
+            "
             :key="String(schema.field)"
-            :label="schema.label"
-            :prop="String(schema.field)"
-            :rules="schema.rules"
-            :style="getItemStyle(schema)"
           >
             <RenderNode
-              v-if="schema.render"
+              v-if="schema.kind === 'content'"
               :vnode="renderSchema(schema)"
             />
-
-            <el-progress
-              v-else-if="schema.component === 'Progress'"
-              v-bind="getProgressProps(schema)"
-              :percentage="getProgressValue(schema)"
-            />
-
-            <component
-              :is="resolveComponent(schema)"
-              v-else-if="isNativeComponent(schema)"
-              v-model="innerModel[String(schema.field)]"
-              v-bind="getComponentProps(schema)"
-            >
-              <template v-if="hasOptions(schema)">
-                <el-option
-                  v-for="option in schema.options || []"
-                  :key="String(option.value)"
-                  :label="option.label"
-                  :value="option.value"
-                  :disabled="option.disabled"
-                />
-              </template>
-
-              <template v-if="schema.component === 'RadioGroup'">
-                <el-radio
-                  v-for="option in schema.options || []"
-                  :key="String(option.value)"
-                  :label="option.value"
-                  :disabled="option.disabled"
-                >
-                  {{ option.label }}
-                </el-radio>
-              </template>
-
-              <template v-if="schema.component === 'CheckboxGroup'">
-                <el-checkbox
-                  v-for="option in schema.options || []"
-                  :key="String(option.value)"
-                  :label="option.value"
-                  :disabled="option.disabled"
-                >
-                  {{ option.label }}
-                </el-checkbox>
-              </template>
-            </component>
-
-            <component
-              :is="schema.component"
+            <el-form-item
               v-else
-              v-model="innerModel[String(schema.field)]"
-              v-bind="getComponentProps(schema)"
-            />
-          </el-form-item>
-        </div>
+              v-bind="schema.itemProps"
+              :class="schema.class"
+              v-show="
+                schema.visible !== false &&
+                (!isCollapsed || index < effectiveCollapsedCount)
+              "
+              :key="String(schema.field)"
+              :label="schema.label"
+              :prop="String(schema.field)"
+              :rules="schema.rules"
+              :style="getItemStyle(schema)"
+            >
+              <template v-if="schema.labelRender" #label>
+                <RenderNode :vnode="schema.labelRender()" />
+              </template>
+              <RenderNode v-if="schema.render" :vnode="renderSchema(schema)" />
+
+              <el-progress
+                v-else-if="schema.component === 'Progress'"
+                v-bind="getProgressProps(schema)"
+                :percentage="getProgressValue(schema)"
+              />
+
+              <component
+                :is="resolveComponent(schema)"
+                v-else-if="isNativeComponent(schema)"
+                :model-value="getField(innerModel, String(schema.field))"
+                @update:model-value="
+                  setField(innerModel, String(schema.field), $event)
+                "
+                v-bind="getComponentProps(schema)"
+              >
+                <template v-if="hasOptions(schema)">
+                  <el-option
+                    v-for="option in schema.options || []"
+                    :key="String(option.value)"
+                    :label="option.label"
+                    :value="option.value"
+                    :disabled="option.disabled"
+                  />
+                </template>
+
+                <template v-if="schema.component === 'RadioGroup'">
+                  <el-radio
+                    v-for="option in schema.options || []"
+                    :key="String(option.value)"
+                    :label="option.value"
+                    :disabled="option.disabled"
+                  >
+                    {{ option.label }}
+                  </el-radio>
+                </template>
+
+                <template v-if="schema.component === 'CheckboxGroup'">
+                  <el-checkbox
+                    v-for="option in schema.options || []"
+                    :key="String(option.value)"
+                    :label="option.value"
+                    :disabled="option.disabled"
+                  >
+                    {{ option.label }}
+                  </el-checkbox>
+                </template>
+              </component>
+
+              <component
+                :is="schema.component"
+                v-else
+                :model-value="getField(innerModel, String(schema.field))"
+                @update:model-value="
+                  setField(innerModel, String(schema.field), $event)
+                "
+                v-bind="getComponentProps(schema)"
+              />
+            </el-form-item>
+          </LayoutColumn>
+        </component>
 
         <slot
           name="fieldsAfter"
@@ -137,13 +175,17 @@
           :isCollapsed="isCollapsed"
         />
         <el-button
-          v-if="showCollapseToggle"
+          v-if="showCollapseToggle || autoCollapse"
+          :style="!showCollapseToggle ? { visibility: 'hidden' } : undefined"
+          :disabled="!showCollapseToggle"
+          :aria-hidden="!showCollapseToggle"
+          :aria-expanded="!isCollapsed"
           :icon="isCollapsed ? ArrowDown : ArrowUp"
           text
           type="primary"
           @click="toggleCollapsed"
         >
-          {{ isCollapsed ? '展开' : '收起' }}
+          {{ isCollapsed ? locale.expand : locale.collapse }}
         </el-button>
 
         <slot
@@ -154,7 +196,9 @@
           :toggleCollapsed="toggleCollapsed"
           :isCollapsed="isCollapsed"
         />
-        <el-button :icon="Search" type="primary" @click="submit">查询</el-button>
+        <el-button :icon="Search" type="primary" @click="submit">{{
+          locale.search
+        }}</el-button>
 
         <slot
           name="resetBefore"
@@ -164,7 +208,9 @@
           :toggleCollapsed="toggleCollapsed"
           :isCollapsed="isCollapsed"
         />
-        <el-button :icon="RefreshLeft" @click="reset">重置</el-button>
+        <el-button :icon="RefreshLeft" @click="reset">{{
+          locale.reset
+        }}</el-button>
 
         <slot
           name="actionsAfter"
@@ -189,13 +235,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, nextTick, reactive, ref, watch } from 'vue';
+import { useCrudLocale } from './config';
+import {
+  computed,
+  h,
+  defineComponent,
+  nextTick,
+  onMounted,
+  onActivated,
+  onBeforeUnmount,
+  reactive,
+  ref,
+  watch,
+} from 'vue';
 import {
   ElCascader,
   ElCheckbox,
   ElColorPicker,
   ElDatePicker,
   ElForm,
+  ElRow,
+  ElCol,
+  ElFormItem,
+  ElButton,
+  ElCheckboxGroup,
+  ElRadioGroup,
   ElInput,
   ElInputNumber,
   ElOption,
@@ -209,15 +273,54 @@ import {
   ElTimeSelect,
   ElTreeSelect,
 } from 'element-plus';
-import { ArrowDown, ArrowUp, RefreshLeft, Search } from '@element-plus/icons-vue';
-import type { FormInstance } from 'element-plus';
+import {
+  ArrowDown,
+  ArrowUp,
+  RefreshLeft,
+  Search,
+} from '@element-plus/icons-vue';
+import type { FormInstance, ColProps } from 'element-plus';
+import cloneDeep from 'lodash.clonedeep';
+import {
+  getField,
+  setField,
+  hasField,
+  removeField,
+  withDefaults as fillDefaults,
+  CrudNotReadyError,
+} from './model';
 import type { CrudFormSchema, CrudRecord } from './types';
+
+// 搜索和编辑表单统一使用 Element Layout；contents 留给宿主复合布局。
+const LayoutColumn = defineComponent({
+  props: {
+    grid: Boolean,
+    hidden: Boolean,
+    column: Object as import('vue').PropType<Partial<ColProps>>,
+  },
+  setup(columnProps, { slots }) {
+    return () =>
+      columnProps.grid
+        ? h(
+            ElCol,
+            {
+              ...columnProps.column,
+              class: 'crud-schema-form__column',
+              style: { display: columnProps.hidden ? 'none' : undefined },
+            },
+            slots,
+          )
+        : slots.default?.();
+  },
+});
 
 const RenderNode = defineComponent({
   name: 'RenderNode',
   props: {
     vnode: {
-      type: [Object, String, Number],
+      type: [Object, String, Number, Array, Boolean] as import('vue').PropType<
+        import('vue').VNodeChild
+      >,
       required: false,
     },
   },
@@ -226,25 +329,36 @@ const RenderNode = defineComponent({
   },
 });
 
+const locale = useCrudLocale();
+
 const props = withDefaults(
   defineProps<{
     modelValue?: CrudRecord;
+    resetValues?: CrudRecord;
+    resetMode?: 'defaults' | 'initial' | 'empty';
+    fieldPolicy?: 'preserve' | 'remove';
     schemas: CrudFormSchema[];
     inline?: boolean;
+    fieldsLayout?: 'wrapped' | 'contents';
+    gutter?: number;
     labelWidth?: string | number;
     showActions?: boolean;
     collapsible?: boolean;
     defaultCollapsed?: boolean;
-    collapsedItemCount?: number;
+    collapsedItemCount?: number | 'auto';
   }>(),
   {
     modelValue: () => ({}),
+    resetMode: 'defaults',
+    fieldPolicy: 'preserve',
     inline: false,
+    fieldsLayout: 'wrapped',
+    gutter: 16,
     labelWidth: 96,
     showActions: true,
     collapsible: false,
     defaultCollapsed: true,
-    collapsedItemCount: 3,
+    collapsedItemCount: 'auto',
   },
 );
 
@@ -274,13 +388,15 @@ const nativeMap = {
   DatePicker: ElDatePicker,
   TimePicker: ElTimePicker,
   TimeSelect: ElTimeSelect,
-  RadioGroup: 'el-radio-group',
-  CheckboxGroup: 'el-checkbox-group',
+  RadioGroup: ElRadioGroup,
+  CheckboxGroup: ElCheckboxGroup,
   Switch: ElSwitch,
   Slider: ElSlider,
   Rate: ElRate,
   ColorPicker: ElColorPicker,
 };
+
+const useGrid = computed(() => props.fieldsLayout !== 'contents');
 
 const visibleSchemas = computed(() =>
   props.schemas.filter((schema) => {
@@ -292,18 +408,90 @@ const visibleSchemas = computed(() =>
   }),
 );
 
-const showCollapseToggle = computed(
-  () => props.collapsible && visibleSchemas.value.length > props.collapsedItemCount,
+// 显式数字沿用固定数量；inline 搜索默认按实际字段和操作区宽度折叠。
+const autoCollapse = computed(
+  () =>
+    props.inline && props.collapsible && props.collapsedItemCount === 'auto',
 );
-
+// 首次测量完成前不展示折叠入口，避免切页时先闪出按钮再隐藏。
+const measuredCount = ref<number>();
+const effectiveCollapsedCount = computed(() =>
+  autoCollapse.value
+    ? (measuredCount.value ?? visibleSchemas.value.length)
+    : props.collapsedItemCount === 'auto'
+      ? 3
+      : Math.max(0, Math.floor(props.collapsedItemCount)),
+);
+const showCollapseToggle = computed(
+  () =>
+    props.collapsible &&
+    visibleSchemas.value.length > effectiveCollapsedCount.value,
+);
+// 全部字段放得下时不改变用户的折叠意图，缩窄后无需业务层额外同步状态。
 const isCollapsed = computed(() => showCollapseToggle.value && collapsed.value);
+let resizeObserver: ResizeObserver | undefined;
+let measureFrame = 0;
+let animationFrame = 0;
+let animationVersion = 0;
 
-const displaySchemas = computed(() => {
-  if (!isCollapsed.value) {
-    return visibleSchemas.value;
+function measureFields() {
+  const wrapper = fieldsWrapperRef.value;
+  if (!autoCollapse.value || !wrapper?.clientWidth) return;
+  const fields = wrapper.querySelector<HTMLElement>(
+    '.crud-schema-form__fields',
+  );
+  if (!fields) return;
+  const gap = Number.parseFloat(getComputedStyle(fields).columnGap) || 0;
+  let used = 0;
+  let count = 0;
+  for (const item of Array.from(fields.children) as HTMLElement[]) {
+    if (visibleSchemas.value[count]?.visible === false) {
+      count++;
+      continue;
+    }
+    // 同一帧临时恢复隐藏项以测量真实 CSS 宽度，不复制控件或丢失其内部状态。
+    const display = item.style.display;
+    item.style.display = '';
+    const style = getComputedStyle(item);
+    const width =
+      item.getBoundingClientRect().width +
+      (Number.parseFloat(style.marginLeft) || 0) +
+      (Number.parseFloat(style.marginRight) || 0);
+    item.style.display = display;
+    used += width + (count ? gap : 0);
+    if (used > (fields.clientWidth || wrapper.clientWidth) + 0.5) break;
+    count++;
   }
-
-  return visibleSchemas.value.slice(0, props.collapsedItemCount);
+  measuredCount.value = count;
+}
+function scheduleMeasure() {
+  cancelAnimationFrame(measureFrame);
+  measureFrame = requestAnimationFrame(measureFields);
+}
+onMounted(() => {
+  if (typeof ResizeObserver !== 'undefined')
+    resizeObserver = new ResizeObserver(scheduleMeasure);
+  if (fieldsWrapperRef.value) resizeObserver?.observe(fieldsWrapperRef.value);
+  measureFields();
+});
+// KeepAlive 页面重新进入时，使用当前容器宽度更新，不能沿用离开前的布局。
+onActivated(measureFields);
+watch(
+  [visibleSchemas, autoCollapse, () => props.labelWidth],
+  () => {
+    measuredCount.value = undefined;
+    resetHeightAnimation();
+  },
+  { flush: 'pre' },
+);
+watch([visibleSchemas, autoCollapse, () => props.labelWidth], measureFields, {
+  deep: true,
+  flush: 'post',
+});
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+  cancelAnimationFrame(measureFrame);
+  resetHeightAnimation();
 });
 
 const fieldsWrapperStyle = computed(() => {
@@ -316,6 +504,32 @@ const fieldsWrapperStyle = computed(() => {
   };
 });
 
+const initialModel = cloneDeep(normalizeModelValue(props.modelValue));
+watch(
+  () =>
+    props.schemas
+      .filter((schema) => schema.kind !== 'content')
+      .map((schema) => String(schema.field)),
+  (fields, previous = []) => {
+    if (props.fieldPolicy === 'remove') {
+      previous
+        .filter((field) => !fields.includes(field))
+        .forEach((field) => {
+          removeField(innerModel, field);
+          removeField(initialModel, field);
+        });
+    }
+    const next = fillDefaults(innerModel, props.schemas);
+    Object.assign(innerModel, next);
+    fields
+      .filter((field) => !previous.includes(field))
+      .forEach((field) => {
+        if (hasField(next, field))
+          setField(initialModel, field, cloneDeep(getField(next, field)));
+      });
+  },
+);
+
 watch(
   () => props.modelValue,
   (value) => {
@@ -327,6 +541,8 @@ watch(
 
     Object.keys(innerModel).forEach((key) => delete innerModel[key]);
     Object.assign(innerModel, nextValue);
+    if (!isSameModel(nextValue, value || {}))
+      emit('update:modelValue', { ...nextValue });
   },
   { immediate: true, deep: true },
 );
@@ -344,14 +560,11 @@ watch(
   { deep: true },
 );
 
-watch(showCollapseToggle, (value) => {
-  if (!value) {
-    collapsed.value = false;
-  }
-});
-
 function isNativeComponent(schema: CrudFormSchema) {
-  return typeof (schema.component || 'Input') === 'string' && String(schema.component || 'Input') in nativeMap;
+  return (
+    typeof (schema.component || 'Input') === 'string' &&
+    String(schema.component || 'Input') in nativeMap
+  );
 }
 
 function resolveComponent(schema: CrudFormSchema) {
@@ -373,13 +586,15 @@ function normalizeInputNumber(value: unknown) {
 }
 
 function normalizeModelValue(value: CrudRecord) {
-  const nextValue = { ...value };
+  const nextValue = fillDefaults(value, props.schemas);
 
   // 接口或表格数据可能把数字序列化为字符串，统一转换后再交给 el-input-number。
   props.schemas.forEach((schema) => {
     const field = String(schema.field);
-    if (schema.component === 'InputNumber' && Object.prototype.hasOwnProperty.call(nextValue, field)) {
-      nextValue[field] = normalizeInputNumber(nextValue[field]);
+    if (schema.component === 'InputNumber' && hasField(nextValue, field)) {
+      const current = getField(nextValue, field);
+      const normalized = normalizeInputNumber(current);
+      if (normalized !== current) setField(nextValue, field, normalized);
     }
   });
 
@@ -389,7 +604,10 @@ function normalizeModelValue(value: CrudRecord) {
 function isSameModel(left: CrudRecord, right: CrudRecord) {
   const leftKeys = Object.keys(left);
   const rightKeys = Object.keys(right);
-  return leftKeys.length === rightKeys.length && leftKeys.every((key) => left[key] === right[key]);
+  return (
+    leftKeys.length === rightKeys.length &&
+    leftKeys.every((key) => left[key] === right[key])
+  );
 }
 
 function renderSchema(schema: CrudFormSchema) {
@@ -401,22 +619,36 @@ function renderSchema(schema: CrudFormSchema) {
 }
 
 function getComponentProps(schema: CrudFormSchema) {
-  if (['RadioGroup', 'CheckboxGroup', 'Switch', 'Slider', 'Rate', 'ColorPicker'].includes(String(schema.component))) {
+  if (
+    [
+      'RadioGroup',
+      'CheckboxGroup',
+      'Switch',
+      'Slider',
+      'Rate',
+      'ColorPicker',
+    ].includes(String(schema.component))
+  ) {
     return {
       style: { width: '100%' },
       ...(schema.props || {}),
     };
   }
 
-  const placeholderPrefix = ['Select', 'TreeSelect', 'Cascader', 'DatePicker', 'TimePicker', 'TimeSelect'].includes(
-    String(schema.component),
-  )
-    ? '请选择'
-    : '请输入';
+  const placeholderPrefix = [
+    'Select',
+    'TreeSelect',
+    'Cascader',
+    'DatePicker',
+    'TimePicker',
+    'TimeSelect',
+  ].includes(String(schema.component))
+    ? locale.value.selectPlaceholder
+    : locale.value.inputPlaceholder;
 
   const commonProps = {
     clearable: true,
-    placeholder: schema.placeholder || `${placeholderPrefix}${schema.label}`,
+    placeholder: schema.placeholder || placeholderPrefix(schema.label),
     style: { width: '100%' },
     ...(schema.props || {}),
   };
@@ -441,7 +673,9 @@ function getComponentProps(schema: CrudFormSchema) {
 }
 
 function getProgressProps(schema: CrudFormSchema) {
-  const { percentage, ...restProps } = schema.props || {};
+  const { percentage, ...restProps } =
+    (schema.component === 'Progress' ? schema.props : undefined) || {};
+  void percentage;
 
   return {
     style: { width: '100%' },
@@ -450,87 +684,67 @@ function getProgressProps(schema: CrudFormSchema) {
 }
 
 function getProgressValue(schema: CrudFormSchema) {
-  const value = innerModel[String(schema.field)];
+  const value = getField(innerModel, String(schema.field));
 
-  if (typeof schema.props?.percentage === 'number') {
+  if (
+    schema.component === 'Progress' &&
+    typeof schema.props?.percentage === 'number'
+  ) {
     return schema.props.percentage;
   }
 
   return Number(value || 0);
 }
 
-function normalizeSize(value: string | number) {
-  return typeof value === 'number' ? `${value}px` : value;
-}
-
-function getInlineItemWidth(schema: CrudFormSchema) {
-  const controlWidth = normalizeSize(schema.width || 224);
-  const labelWidthValue = props.labelWidth === 'auto' ? 0 : props.labelWidth;
-  const labelWidth = normalizeSize(labelWidthValue || 0);
-
-  // schema.width 表示控件宽度，外层 form-item 需要额外加上 label 宽度。
-  return `calc(${controlWidth} + ${labelWidth})`;
-}
-
 function getItemStyle(schema: CrudFormSchema) {
-  if (props.inline) {
-    return {
-      width: getInlineItemWidth(schema),
-    };
-  }
-
-  const span = schema.span || 24;
-  return {
-    width: `${(Math.min(span, 24) / 24) * 100}%`,
-  };
+  if (props.fieldsLayout === 'contents') return schema.style;
+  return { ...schema.style, width: '100%' };
 }
 
 async function toggleCollapsed() {
+  if (!props.collapsible) return;
   const wrapper = fieldsWrapperRef.value;
-  const content = fieldsContentRef.value;
-
-  if (!wrapper) {
+  const startHeight = wrapper?.getBoundingClientRect().height || 0;
+  resetHeightAnimation();
+  const version = animationVersion;
+  if (
+    !wrapper ||
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  ) {
     collapsed.value = !collapsed.value;
     return;
   }
-
-  const nextCollapsed = !collapsed.value;
-  resetAnimationFallback();
-  const startHeight = content?.getBoundingClientRect().height || wrapper.getBoundingClientRect().height;
   animatedHeight.value = `${startHeight}px`;
   isHeightAnimating.value = true;
-
-  // 先把起始高度写入，再触发折叠状态变更，避免动画丢帧。
-  void wrapper.offsetHeight;
-  collapsed.value = nextCollapsed;
-
   await nextTick();
-
-  const endHeight = fieldsContentRef.value?.getBoundingClientRect().height || wrapper.scrollHeight;
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      animatedHeight.value = `${endHeight}px`;
-
-      if (startHeight === endHeight) {
-        resetHeightAnimation();
-        return;
-      }
-
-      // 某些场景不会触发 transitionend，这里给一个兜底，避免 height 卡住。
-      animationFallbackTimer = setTimeout(() => {
-        resetHeightAnimation();
-      }, 320);
-    });
+  if (version !== animationVersion) return;
+  // 起始高度必须先落到 DOM，快速反向点击从当前可见高度继续。
+  void wrapper.offsetHeight;
+  collapsed.value = !collapsed.value;
+  await nextTick();
+  if (version !== animationVersion) return;
+  const endHeight = fieldsContentRef.value?.getBoundingClientRect().height || 0;
+  animationFrame = requestAnimationFrame(() => {
+    animatedHeight.value = `${endHeight}px`;
+    if (Math.abs(startHeight - endHeight) < 0.5) resetHeightAnimation();
+    else animationFallbackTimer = setTimeout(resetHeightAnimation, 320);
   });
 }
 
-function handleHeightTransitionEnd(event: TransitionEvent) {
-  if (event.propertyName !== 'height') {
-    return;
-  }
+// 动画中关闭折叠时立即释放固定高度，避免已展开字段仍被裁切。
+watch(
+  () => props.collapsible,
+  (enabled) => {
+    if (!enabled) resetHeightAnimation();
+  },
+);
 
-  resetAnimationFallback();
-  resetHeightAnimation();
+function handleHeightTransitionEnd(event: TransitionEvent) {
+  if (
+    event.target === fieldsWrapperRef.value &&
+    event.propertyName === 'height'
+  )
+    resetHeightAnimation();
 }
 
 function resetAnimationFallback() {
@@ -543,25 +757,99 @@ function resetAnimationFallback() {
 }
 
 function resetHeightAnimation() {
+  animationVersion++;
+  cancelAnimationFrame(animationFrame);
   resetAnimationFallback();
   animatedHeight.value = undefined;
   isHeightAnimating.value = false;
 }
 
+async function revealErrors(error: unknown) {
+  if (!error || typeof error !== 'object') return;
+  const field = Object.keys(error)[0];
+  if (!field) return;
+  // 校验仍包含折叠字段，先展开再滚动，避免用户只看到失败却看不到原因。
+  collapsed.value = false;
+  resetHeightAnimation();
+  await nextTick();
+  if (
+    typeof Element !== 'undefined' &&
+    typeof Element.prototype.scrollIntoView === 'function'
+  ) {
+    formRef.value?.scrollToField(field);
+  }
+}
+const validate: FormInstance['validate'] = async (callback) => {
+  if (!formRef.value) throw new CrudNotReadyError();
+  try {
+    await formRef.value.validate();
+  } catch (error) {
+    await revealErrors(error);
+    if (callback) {
+      await callback(false, error as never);
+      return false;
+    }
+    throw error;
+  }
+  // 宿主回调异常直接向外传播，不应再次按校验失败调用同一回调。
+  if (callback) await callback(true);
+  return true;
+};
+const validateField: FormInstance['validateField'] = async (
+  fields,
+  callback,
+) => {
+  if (!formRef.value) throw new CrudNotReadyError();
+  try {
+    await formRef.value.validateField(fields);
+  } catch (error) {
+    await revealErrors(error);
+    if (callback) {
+      await callback(false, error as never);
+      return false;
+    }
+    throw error;
+  }
+  // 宿主回调异常直接向外传播，不应再次按校验失败调用同一回调。
+  if (callback) await callback(true);
+  return true;
+};
 async function submit() {
-  await formRef.value?.validate();
-  emit('submit', { ...innerModel });
+  try {
+    await validate();
+    emit('submit', cloneDeep({ ...innerModel }));
+  } catch {
+    /* 错误已呈现在字段上，模板事件不产生未处理拒绝。 */
+  }
 }
 
 async function reset() {
-  await formRef.value?.resetFields();
-  props.schemas.forEach((schema) => {
-    const defaultValue = schema.defaultValue ?? undefined;
-    innerModel[String(schema.field)] = schema.component === 'InputNumber'
-      ? normalizeInputNumber(defaultValue)
-      : defaultValue;
-  });
-  emit('reset', { ...innerModel });
+  if (props.resetValues || props.resetMode === 'initial') {
+    // 组合字段与嵌套模型按调用方提供的初始快照一次恢复。
+    Object.keys(innerModel).forEach((key) => delete innerModel[key]);
+    Object.assign(innerModel, cloneDeep(props.resetValues ?? initialModel));
+    await nextTick();
+    formRef.value?.clearValidate();
+  } else {
+    formRef.value?.resetFields();
+    props.schemas
+      .filter((schema) => schema.kind !== 'content')
+      .forEach((schema) => {
+        const defaultValue =
+          props.resetMode === 'empty'
+            ? undefined
+            : cloneDeep(schema.defaultValue);
+        setField(
+          innerModel,
+          String(schema.field),
+          schema.component === 'InputNumber'
+            ? normalizeInputNumber(defaultValue)
+            : defaultValue,
+        );
+      });
+    await nextTick();
+  }
+  emit('reset', cloneDeep({ ...innerModel }));
 }
 
 function setFieldsValue(value: CrudRecord) {
@@ -569,11 +857,19 @@ function setFieldsValue(value: CrudRecord) {
 }
 
 function getFieldsValue() {
-  return { ...innerModel };
+  return cloneDeep({ ...innerModel });
 }
 
 defineExpose({
-  validate: () => formRef.value?.validate(),
+  validateField,
+  clearValidate: (...args: Parameters<FormInstance['clearValidate']>) =>
+    formRef.value?.clearValidate(...args),
+  scrollToField: (...args: Parameters<FormInstance['scrollToField']>) =>
+    formRef.value?.scrollToField(...args),
+  resetFormFields: (...args: Parameters<FormInstance['resetFields']>) =>
+    formRef.value?.resetFields(...args),
+
+  validate,
   resetFields: () => reset(),
   setFieldsValue,
   getFieldsValue,
@@ -640,13 +936,20 @@ defineExpose({
 }
 
 .crud-schema-form--inline {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   display: flex;
   align-items: flex-start;
-  gap: 0;
+  gap: var(--crud-form-gap, 12px);
   margin: 0;
 
+  .crud-schema-form__fields-wrapper {
+    flex: 1 1 224px;
+    min-width: 0;
+    width: auto;
+  }
+
   .crud-schema-form__fields {
+    row-gap: var(--crud-form-gap, 12px);
     flex: 1 1 auto;
     width: auto;
     min-width: 0;
@@ -654,7 +957,9 @@ defineExpose({
 
   :deep(.el-form-item) {
     padding: 0;
-    margin-right: 12px;
+    margin-right: 0;
+    margin-bottom: 0;
+    max-width: 100%;
   }
 
   :deep(.el-form-item__content) {
@@ -666,15 +971,48 @@ defineExpose({
 .crud-schema-form__actions {
   margin-left: auto;
   flex: 0 0 auto;
-  min-width: 296px;
+  min-width: 0;
+  max-width: 100%;
+  margin-bottom: 0;
 
   :deep(.el-form-item__content) {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 8px;
-    white-space: nowrap;
+    gap: var(--crud-action-gap, 8px);
+    white-space: normal;
+
+    .el-button + .el-button {
+      margin-left: 0;
+    }
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .crud-schema-form__fields-wrapper {
+    transition: none;
+  }
+}
+/* 复合业务表单由宿主网格布局，字段仍由同一表单实例管理校验。 */
+.crud-schema-form--contents {
+  .crud-schema-form__fields-wrapper,
+  .crud-schema-form__fields-content,
+  .crud-schema-form__fields {
+    display: contents;
+  }
+}
+/* 列间距由 ElRow gutter 分配，不再叠加表单项的左右 padding。 */
+.crud-schema-form--grid {
+  margin: 0;
+}
+.crud-schema-form__fields.el-row {
+  width: auto;
+  flex: 1 1 auto;
+}
+.crud-schema-form__column {
+  min-width: 0;
+}
+.crud-schema-form__column :deep(.el-form-item) {
+  padding: 0;
 }
 </style>

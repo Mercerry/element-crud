@@ -1,4 +1,7 @@
-import type { CrudListResult, CrudRequestParams } from '@/components/element-crud';
+import type {
+  CrudListResult,
+  CrudRequestParams,
+} from '@/components/element-crud';
 
 export interface MockUser {
   id: number;
@@ -29,7 +32,16 @@ let idSeed = 1000;
 let users = createMockUsers(57);
 
 function createMockUsers(count: number): MockUser[] {
-  const names = ['mercury', 'atlas', 'nova', 'river', 'stone', 'luna', 'orbit', 'pixel'];
+  const names = [
+    'mercury',
+    'atlas',
+    'nova',
+    'river',
+    'stone',
+    'luna',
+    'orbit',
+    'pixel',
+  ];
   const roles: MockUser['role'][] = ['admin', 'auditor', 'operator'];
 
   return Array.from({ length: count }).map((_, index) => {
@@ -52,7 +64,9 @@ function createMockUsers(count: number): MockUser[] {
   });
 }
 
-export async function queryUsers(params: CrudRequestParams): Promise<CrudListResult<MockUser>> {
+export async function queryUsers(
+  params: CrudRequestParams,
+): Promise<CrudListResult<MockUser>> {
   await sleep(240);
 
   const {
@@ -72,17 +86,27 @@ export async function queryUsers(params: CrudRequestParams): Promise<CrudListRes
 
   // mock 过滤逻辑尽量贴近真实接口：先筛选，再按 page/pageSize 截取。
   const filtered = users.filter((item) => {
-    const matchUsername = username ? item.username.includes(String(username)) : true;
-    const matchNickname = nickname ? item.nickname.includes(String(nickname)) : true;
+    const matchUsername = username
+      ? item.username.includes(String(username))
+      : true;
+    const matchNickname = nickname
+      ? item.nickname.includes(String(nickname))
+      : true;
     const matchDept = deptId ? item.deptId === Number(deptId) : true;
     const matchRole = role ? item.role === role : true;
     const matchStatus = status ? item.status === status : true;
     const matchPhone = phone ? item.phone.includes(String(phone)) : true;
     const matchEmail = email ? item.email.includes(String(email)) : true;
-    const matchCreatedAt = createdAt ? item.createdAt === String(createdAt) : true;
+    const matchCreatedAt = createdAt
+      ? item.createdAt === String(createdAt)
+      : true;
     const matchProgress =
       profileProgressValue !== undefined && profileProgressValue !== ''
-        ? compareProgress(item.profileProgress, Number(profileProgressValue), String(profileProgressOperator || 'gte'))
+        ? compareProgress(
+            item.profileProgress,
+            Number(profileProgressValue),
+            String(profileProgressOperator || 'gte'),
+          )
         : true;
 
     return (
@@ -130,14 +154,20 @@ export async function createUser(values: Partial<MockUser>) {
     profileProgress: Number(values.profileProgress || 60),
     phone: String(values.phone || ''),
     email: String(values.email || ''),
-    createdAt: String(values.createdAt || new Date().toISOString().slice(0, 10)),
+    createdAt: String(
+      values.createdAt || new Date().toISOString().slice(0, 10),
+    ),
     remark: String(values.remark || ''),
   });
 }
 
 export async function updateUser(values: Partial<MockUser>, row: MockUser) {
   await sleep(160);
-  users = users.map((item) => (item.id === row.id ? ({ ...item, ...values, id: row.id } as MockUser) : item));
+  users = users.map((item) =>
+    item.id === row.id
+      ? ({ ...item, ...values, id: row.id } as MockUser)
+      : item,
+  );
 }
 
 export async function removeUser(row: MockUser) {
@@ -154,9 +184,11 @@ export function getStatusName(status: MockUser['status']) {
 }
 
 export function getDeptName(deptId: number) {
-  return deptTree
-    .flatMap((item) => [item, ...(item.children || [])])
-    .find((item) => item.value === deptId)?.label || '-';
+  return (
+    deptTree
+      .flatMap((item) => [item, ...(item.children || [])])
+      .find((item) => item.value === deptId)?.label || '-'
+  );
 }
 
 export const deptTree = [

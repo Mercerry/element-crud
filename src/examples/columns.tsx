@@ -116,7 +116,9 @@ export const columns: CrudColumn<MockUser>[] = [
         showInput: true,
       },
     },
-    render: ({ row }) => <ElProgress percentage={row.profileProgress} strokeWidth={8} />,
+    render: ({ row }) => (
+      <ElProgress percentage={row.profileProgress} strokeWidth={8} />
+    ),
   },
   {
     prop: 'profileProgressOperator',

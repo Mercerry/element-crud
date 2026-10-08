@@ -16,3 +16,5 @@ export {
   SchemaFormDialog as CrudFormDialog,
   SchemaFormBase as CrudSchemaForm,
 };
+
+export * from './config';

@@ -3,7 +3,12 @@
     ref="formRef"
     v-model="model"
     :schemas="schemas"
+    :reset-values="resetValues"
+    :reset-mode="resetMode"
+    :field-policy="fieldPolicy"
     :inline="inline"
+    :fields-layout="fieldsLayout"
+    :gutter="gutter"
     :label-width="labelWidth"
     :show-actions="showActions"
     :collapsible="collapsible"
@@ -20,28 +25,36 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import type { FormInstance } from 'element-plus';
 import SchemaFormBase from './SchemaFormBase.vue';
 import type { CrudFormSchema, CrudRecord } from './types';
 
 const props = withDefaults(
   defineProps<{
     modelValue?: CrudRecord;
+    resetValues?: CrudRecord;
+    resetMode?: 'defaults' | 'initial' | 'empty';
+    fieldPolicy?: 'preserve' | 'remove';
     schemas: CrudFormSchema[];
     inline?: boolean;
+    fieldsLayout?: 'wrapped' | 'contents';
+    gutter?: number;
     labelWidth?: string | number;
     showActions?: boolean;
     collapsible?: boolean;
     defaultCollapsed?: boolean;
-    collapsedItemCount?: number;
+    collapsedItemCount?: number | 'auto';
   }>(),
   {
     modelValue: () => ({}),
     inline: false,
+    fieldsLayout: 'wrapped',
+    gutter: 16,
     labelWidth: 96,
     showActions: true,
     collapsible: false,
     defaultCollapsed: true,
-    collapsedItemCount: 3,
+    collapsedItemCount: 'auto',
   },
 );
 
@@ -59,7 +72,17 @@ const model = computed({
 });
 
 defineExpose({
-  validate: () => formRef.value?.validate(),
+  validateField: (...args: Parameters<FormInstance['validateField']>) =>
+    formRef.value!.validateField(...args),
+  clearValidate: (...args: Parameters<FormInstance['clearValidate']>) =>
+    formRef.value?.clearValidate(...args),
+  scrollToField: (...args: Parameters<FormInstance['scrollToField']>) =>
+    formRef.value?.scrollToField(...args),
+  resetFormFields: (...args: Parameters<FormInstance['resetFields']>) =>
+    formRef.value?.resetFormFields(...args),
+
+  validate: (...args: Parameters<FormInstance['validate']>) =>
+    formRef.value!.validate(...args),
   resetFields: () => formRef.value?.resetFields(),
   setFieldsValue: (value: CrudRecord) => formRef.value?.setFieldsValue(value),
   getFieldsValue: () => formRef.value?.getFieldsValue(),

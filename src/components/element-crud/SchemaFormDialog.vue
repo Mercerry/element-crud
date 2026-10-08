@@ -1,12 +1,16 @@
 <template>
-  <el-dialog
+  <component
+    :is="mode === 'drawer' ? ElDrawer : ElDialog"
     v-model="visible"
+    :title="title"
     :width="width"
+    :size="width"
     :draggable="draggable"
     destroy-on-close
-    v-bind="dialogProps"
+    v-bind="resolvedDialogProps"
     @open="emit('open')"
     @opened="emit('opened')"
+    @close="emit('close')"
     @closed="emit('closed')"
   >
     <template #header>
@@ -21,12 +25,13 @@
       :submit="submit"
       :cancel="cancel"
       :close="close"
-      :submitting="submitting"
+      :submitting="locked"
     />
 
     <SchemaForm
       ref="formRef"
-      v-model="formModel"
+      :model-value="formModel"
+      @update:model-value="(value) => replaceModel(formModel, value)"
       :schemas="schemas"
       :label-width="labelWidth"
       :show-actions="false"
@@ -42,13 +47,13 @@
       :submit="submit"
       :cancel="cancel"
       :close="close"
-      :submitting="submitting"
+      :submitting="locked"
     />
 
     <template #footer>
       <slot
         name="footer"
-        :submitting="submitting"
+        :submitting="locked"
         :submit="submit"
         :cancel="cancel"
         :close="close"
@@ -56,32 +61,42 @@
         <el-button
           v-if="showCancelButton"
           v-bind="cancelButtonProps"
+          :disabled="locked || cancelButtonProps.disabled"
           @click="cancel"
         >
-          {{ cancelButtonText }}
+          {{ cancelButtonText ?? locale.cancel }}
         </el-button>
         <el-button
           v-if="showConfirmButton"
           type="primary"
-          :loading="submitting"
+          :loading="locked"
           v-bind="confirmButtonProps"
-          @click="submit"
+          @click="requestSubmit"
         >
-          {{ confirmButtonText }}
+          {{ confirmButtonText ?? locale.confirm }}
         </el-button>
       </slot>
     </template>
-  </el-dialog>
+  </component>
 </template>
 
 <script setup lang="ts" generic="T extends CrudRecord">
-import { computed, reactive, ref, watch } from 'vue';
+import { replaceModel } from './model';
+import { useCrudLocale } from './config';
+import { computed, reactive, ref, watch, onBeforeUnmount } from 'vue';
+import { ElDialog, ElDrawer, ElButton } from 'element-plus';
+import cloneDeep from 'lodash.clonedeep';
+import { withDefaults as fillDefaults, CrudNotReadyError } from './model';
 import SchemaForm from './SchemaForm.vue';
 import type { CrudFormSchema, CrudRecord } from './types';
+
+const locale = useCrudLocale();
 
 const props = withDefaults(
   defineProps<{
     modelValue: boolean;
+    busy?: boolean;
+    mode?: 'dialog' | 'drawer';
     title: string;
     schemas: CrudFormSchema<T>[];
     initialValues?: Partial<T>;
@@ -89,6 +104,7 @@ const props = withDefaults(
     labelWidth?: string | number;
     draggable?: boolean;
     autoCloseOnSubmit?: boolean;
+    submitRequest?: (values: Partial<T>) => Promise<void> | void;
     showCancelButton?: boolean;
     showConfirmButton?: boolean;
     cancelButtonText?: string;
@@ -98,6 +114,8 @@ const props = withDefaults(
     dialogProps?: Record<string, any>;
   }>(),
   {
+    busy: false,
+    mode: 'dialog',
     initialValues: () => ({}),
     width: 720,
     labelWidth: 96,
@@ -105,8 +123,6 @@ const props = withDefaults(
     autoCloseOnSubmit: true,
     showCancelButton: true,
     showConfirmButton: true,
-    cancelButtonText: '取消',
-    confirmButtonText: '确认',
     cancelButtonProps: () => ({}),
     confirmButtonProps: () => ({}),
     dialogProps: () => ({}),
@@ -115,6 +131,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
+  submitError: [error: unknown];
   submit: [values: Partial<T>, done: (shouldClose?: boolean) => void];
   cancel: [];
   close: [];
@@ -126,55 +143,111 @@ const emit = defineEmits<{
 const formRef = ref<InstanceType<typeof SchemaForm>>();
 const submitting = ref(false);
 const formModel = reactive<CrudRecord>({});
+const locked = computed(() => props.busy || submitting.value);
+let generation = 0;
+onBeforeUnmount(() => {
+  generation++;
+});
+const resolvedDialogProps = computed(() => ({
+  ...props.dialogProps,
+  ...(locked.value
+    ? { showClose: false, closeOnClickModal: false, closeOnPressEscape: false }
+    : {}),
+  beforeClose: (done: () => void) => {
+    if (locked.value) return;
+    const beforeClose = props.dialogProps.beforeClose;
+    if (typeof beforeClose === 'function') beforeClose(done);
+    else done();
+  },
+}));
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
+  set: (value) => {
+    if (value || !locked.value) emit('update:modelValue', value);
+  },
 });
 
+// 只在打开或显式切换记录时重建草稿；字典选项、规则变化不清空输入。
 watch(
-  () => [props.initialValues, props.schemas, props.modelValue] as const,
-  () => {
-    if (!props.modelValue) {
-      return;
-    }
-
-    resetFormModel();
+  () => props.modelValue,
+  (value) => {
+    generation++;
+    submitting.value = false;
+    if (value) resetFormModel();
   },
-  { immediate: true, deep: true },
+  { immediate: true },
+);
+watch(
+  () => props.initialValues,
+  () => {
+    if (props.modelValue && !locked.value) resetFormModel();
+  },
 );
 
 function resetFormModel() {
-  const nextModel: CrudRecord = {};
-
-  props.schemas.forEach((schema) => {
-    nextModel[String(schema.field)] = schema.defaultValue ?? undefined;
-  });
-  Object.assign(nextModel, props.initialValues || {});
+  const nextModel = fillDefaults(
+    cloneDeep(props.initialValues || {}),
+    props.schemas,
+  );
   Object.keys(formModel).forEach((key) => delete formModel[key]);
   Object.assign(formModel, nextModel);
 }
 
 async function submit() {
-  await formRef.value?.validate?.();
+  if (locked.value || !props.modelValue) return;
   submitting.value = true;
-  emit('submit', { ...formModel } as Partial<T>, (shouldClose = props.autoCloseOnSubmit) => {
-    submitting.value = false;
-
-    if (shouldClose) {
-      close();
+  const current = generation;
+  try {
+    if (!formRef.value) throw new CrudNotReadyError();
+    await formRef.value.validate();
+    if (current !== generation) return;
+    if (props.submitRequest) {
+      const values = cloneDeep({ ...formModel }) as Partial<T>;
+      try {
+        await props.submitRequest(values);
+      } catch (error) {
+        emit('submitError', error);
+        throw error;
+      }
+      if (current !== generation) return;
+      submitting.value = false;
+      if (props.autoCloseOnSubmit) visible.value = false;
+      return;
     }
-  });
+    let completed = false;
+    emit(
+      'submit',
+      cloneDeep({ ...formModel }) as Partial<T>,
+      (shouldClose = props.autoCloseOnSubmit) => {
+        // 旧弹窗的异步回调不能关闭新一轮会话，也不能重复完成。
+        if (current !== generation || completed) return;
+        completed = true;
+        submitting.value = false;
+        if (shouldClose) visible.value = false;
+      },
+    );
+  } catch (error) {
+    if (current === generation) submitting.value = false;
+    throw error;
+  }
 }
-
+async function requestSubmit() {
+  try {
+    await submit();
+  } catch {
+    /* 字段保留校验错误，按钮事件不产生未处理拒绝。 */
+  }
+}
 function cancel() {
+  if (locked.value) return;
   emit('cancel');
   close();
 }
-
 function close() {
-  visible.value = false;
-  emit('close');
+  resolvedDialogProps.value.beforeClose(() => {
+    visible.value = false;
+  });
 }
 
 defineExpose({

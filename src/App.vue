@@ -32,7 +32,10 @@
 
       <section id="docs" class="doc-section">
         <h2>使用文档</h2>
-        <p>安装插件后可以全局使用 `DynamicTable` 和 `SchemaFormBase`，也可以按需从包入口导入。</p>
+        <p>
+          安装插件后可以全局使用 `DynamicTable` 和
+          `SchemaFormBase`，也可以按需从包入口导入。
+        </p>
         <pre><code>{{ usageCode }}</code></pre>
         <div class="doc-links">
           <button
@@ -74,13 +77,19 @@
 
       <section id="api" class="doc-section">
         <h2>API 文档</h2>
-        <article v-for="table in apiTables" :key="table.title" class="api-table">
+        <article
+          v-for="table in apiTables"
+          :key="table.title"
+          class="api-table"
+        >
           <h3>{{ table.title }}</h3>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th v-for="column in table.columns" :key="column">{{ column }}</th>
+                  <th v-for="column in table.columns" :key="column">
+                    {{ column }}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -94,7 +103,10 @@
 
         <article class="api-table">
           <h3>Element Plus 原生组件参数</h3>
-          <p>`CrudFormSchema.props` 会透传给实际 Element Plus 组件，需要配置原生参数时可直接查看官方文档。</p>
+          <p>
+            `CrudFormSchema.props` 会透传给实际 Element Plus
+            组件，需要配置原生参数时可直接查看官方文档。
+          </p>
           <div class="component-link-grid">
             <a
               v-for="item in elementPlusLinks"
@@ -151,14 +163,31 @@ const usageCode = [
   'app.use(DynamicCrud);',
 ].join('\n');
 
-
 const features = [
-  { title: '配置式列', desc: '一份 columns 配置同时声明表格展示、搜索控件、表单控件和列渲染。' },
-  { title: '保留请求参数', desc: '分页、pageSize、搜索条件会统一传给 request，方便后续切换真实接口。' },
-  { title: '内置 CRUD', desc: '传入 create、update、remove 后，新增、编辑、删除和刷新自动串联。' },
-  { title: '详情展示', desc: 'DynamicDetail 可直接复用 columns，也可以用独立 schemas 渲染详情。' },
-  { title: '组合 hooks', desc: 'useTable、useForm、useDialog 封装页面常用实例和弹窗状态。' },
-  { title: '示例 mock', desc: '示例页使用本地 mock 制造假数据，不依赖后端接口。' },
+  {
+    title: '配置式列',
+    desc: '一份 columns 配置同时声明表格展示、搜索控件、表单控件和列渲染。',
+  },
+  {
+    title: '保留请求参数',
+    desc: '分页、pageSize、搜索条件会统一传给 request，方便后续切换真实接口。',
+  },
+  {
+    title: '内置 CRUD',
+    desc: '传入 create、update、remove 后，新增、编辑、删除和刷新自动串联。',
+  },
+  {
+    title: '详情展示',
+    desc: 'DynamicDetail 可直接复用 columns，也可以用独立 schemas 渲染详情。',
+  },
+  {
+    title: '组合 hooks',
+    desc: 'useTable、useForm、useDialog 封装页面常用实例和弹窗状态。',
+  },
+  {
+    title: '示例 mock',
+    desc: '示例页使用本地 mock 制造假数据，不依赖后端接口。',
+  },
 ];
 
 const componentDocs = [
@@ -170,7 +199,7 @@ const componentDocs = [
       '通过 formSchemas 或 columns.form 生成弹窗表单。',
       '最后一列固定为 ACTIONS，可通过 #ACTIONS 插槽自定义按钮。',
       'request 入参固定保留 page、pageSize 和搜索条件。',
-      '搜索项超过 searchCollapsedItemCount 时自动折叠，可点击展开/收起。',
+      '搜索项默认按容器宽度折叠，显式数量兼容旧用法，可点击展开/收起。',
       'create、update、remove 成功后自动刷新列表。',
       '可直接使用独立的 SchemaFormDialog 处理非表格场景。',
     ],
@@ -256,16 +285,16 @@ const usageExamples = [
   {
     title: 'TSX render',
     code: [
-      "export const columns = [{",
+      'export const columns = [{',
       "  prop: 'role',",
       "  label: '角色',",
-      "  render: ({ row }) => <ElTag type=\"info\">{row.role}</ElTag>,",
+      '  render: ({ row }) => <ElTag type="info">{row.role}</ElTag>,',
       '}];',
       '',
-      "export const formSchemas = [{",
+      'export const formSchemas = [{',
       "  field: 'formTip',",
       "  label: ' ',",
-      "  render: () => <ElAlert title=\"自定义提示\" type=\"info\" />,",
+      '  render: () => <ElAlert title="自定义提示" type="info" />,',
       '}];',
     ].join('\n'),
   },
@@ -302,9 +331,9 @@ const usageExamples = [
   {
     title: 'Hooks',
     code: [
-      "const { tableRef, reload } = useTable<User>();",
+      'const { tableRef, reload } = useTable<User>();',
       "const { formRef, model, validate } = useForm<User>({ status: 'enabled' });",
-      "const detailDialog = useDialog<User>();",
+      'const detailDialog = useDialog<User>();',
       '',
       '<DynamicTable ref="tableRef" :columns="columns" :request="queryUsers" />',
       '<SchemaForm ref="formRef" v-model="model" :schemas="formSchemas" />',
@@ -319,15 +348,40 @@ const apiTables: ApiTable[] = [
     columns: ['参数', '类型', '说明', '默认值'],
     rows: [
       ['columns', 'CrudColumn[]', '表格列配置，也可派生搜索项和表单项', '必填'],
-      ['formSchemas', 'CrudFormSchema[]', '弹窗表单配置，不传则由 columns.form 派生', '[]'],
-      ['request', '(params) => { list, total }', '列表请求函数，params 包含 page/pageSize/搜索条件', '-'],
+      [
+        'formSchemas',
+        'CrudFormSchema[]',
+        '弹窗表单配置，不传则由 columns.form 派生',
+        '[]',
+      ],
+      [
+        'request',
+        '(params) => { list, total }',
+        '列表请求函数，params 包含 page/pageSize/搜索条件',
+        '-',
+      ],
       ['create', '(values) => void', '新增保存函数', '-'],
       ['update', '(values, row) => void', '编辑保存函数', '-'],
       ['remove', '(row) => void', '删除函数', '-'],
       ['search', 'boolean', '是否显示搜索表单', 'true'],
-      ['searchCollapsible', 'boolean', '搜索项过多时是否启用自动折叠', 'true'],
-      ['searchDefaultCollapsed', 'boolean', '搜索表单首次渲染是否默认收起', 'true'],
-      ['searchCollapsedItemCount', 'number', '收起状态下保留展示的搜索项数量', '3'],
+      [
+        'searchCollapsible',
+        'boolean',
+        '是否启用折叠；false 隐藏折叠按钮并展示全部搜索项',
+        'true',
+      ],
+      [
+        'searchDefaultCollapsed',
+        'boolean',
+        '搜索表单首次渲染是否默认收起',
+        'true',
+      ],
+      [
+        'searchCollapsedItemCount',
+        "number | 'auto'",
+        '按宽度自适应或固定展示数量',
+        'auto',
+      ],
       ['searchLabelWidth', 'string | number', '搜索表单 label 宽度', '88'],
       ['pagination', 'boolean', '是否显示分页', 'true'],
       ['pageSizes', 'number[]', '分页 pageSize 可选值', '[10, 20, 50, 100]'],
@@ -347,13 +401,23 @@ const apiTables: ApiTable[] = [
     rows: [
       ['record', 'T | null', '当前详情数据；为空时显示 el-empty', 'null'],
       ['columns', 'CrudColumn[]', '不传 schemas 时用于自动派生详情项', '[]'],
-      ['schemas', 'CrudDetailSchema[]', '独立详情项配置，优先级高于 columns', '[]'],
+      [
+        'schemas',
+        'CrudDetailSchema[]',
+        '独立详情项配置，优先级高于 columns',
+        '[]',
+      ],
       ['title', 'string', 'Descriptions 标题', '-'],
       ['column', 'number', '每行展示几项', '2'],
       ['border', 'boolean', '是否显示边框', 'true'],
       ['labelWidth', 'string | number', '详情项 label 宽度', '120'],
       ['emptyText', 'string', '无数据时的空状态文案', '暂无详情数据'],
-      ['descriptionProps', 'Record<string, any>', '透传给 el-descriptions 的原生参数', '{}'],
+      [
+        'descriptionProps',
+        'Record<string, any>',
+        '透传给 el-descriptions 的原生参数',
+        '{}',
+      ],
     ],
   },
   {
@@ -365,10 +429,30 @@ const apiTables: ApiTable[] = [
       ['span', 'number', '详情项跨列数量', '2'],
       ['width', 'string | number', '详情项内容宽度', '180'],
       ['labelWidth', 'string | number', '单个详情项 label 宽度', '120'],
-      ['hidden', 'boolean | (record) => boolean', '按当前详情数据控制显示隐藏', '(record) => !record.remark'],
-      ['props', 'Record<string, any>', '透传给 el-descriptions-item 的参数', "{ align: 'center' }"],
-      ['formatter', '(record, value, index) => string', '格式化详情值', '字典转换'],
-      ['render', '({ record, value, index, schema, field }) => VNode', 'TSX 自定义详情内容', 'render: ({ value }) => <ElTag />'],
+      [
+        'hidden',
+        'boolean | (record) => boolean',
+        '按当前详情数据控制显示隐藏',
+        '(record) => !record.remark',
+      ],
+      [
+        'props',
+        'Record<string, any>',
+        '透传给 el-descriptions-item 的参数',
+        "{ align: 'center' }",
+      ],
+      [
+        'formatter',
+        '(record, value, index) => string',
+        '格式化详情值',
+        '字典转换',
+      ],
+      [
+        'render',
+        '({ record, value, index, schema, field }) => VNode',
+        'TSX 自定义详情内容',
+        'render: ({ value }) => <ElTag />',
+      ],
     ],
   },
   {
@@ -380,12 +464,32 @@ const apiTables: ApiTable[] = [
       ['width', 'string | number', '表格列固定宽度', '120'],
       ['minWidth', 'string | number', '表格列最小宽度', '160'],
       ['fixed', "true | 'left' | 'right'", '表格列固定位置', 'right'],
-      ['align', "left | center | right", '表格列内容对齐方式', 'center'],
+      ['align', 'left | center | right', '表格列内容对齐方式', 'center'],
       ['sortable', "boolean | 'custom'", '是否启用排序', 'true'],
-      ['search', 'false | CrudFormSchema', '搜索项配置，false 表示不参与搜索', "{ component: 'Select' }"],
-      ['form', 'false | CrudFormSchema', '弹窗表单项配置，false 表示不参与表单', "{ rules: [...] }"],
-      ['formatter', '(row, value, index) => string', '默认单元格格式化', '格式化字典值'],
-      ['render', '({ row, value, index }) => VNode', '使用 TSX 自定义单元格内容', 'render: ({ row }) => <ElTag />'],
+      [
+        'search',
+        'false | CrudFormSchema',
+        '搜索项配置，false 表示不参与搜索',
+        "{ component: 'Select' }",
+      ],
+      [
+        'form',
+        'false | CrudFormSchema',
+        '弹窗表单项配置，false 表示不参与表单',
+        '{ rules: [...] }',
+      ],
+      [
+        'formatter',
+        '(row, value, index) => string',
+        '默认单元格格式化',
+        '格式化字典值',
+      ],
+      [
+        'render',
+        '({ row, value, index }) => VNode',
+        '使用 TSX 自定义单元格内容',
+        'render: ({ row }) => <ElTag />',
+      ],
       ['hideInTable', 'boolean', '是否隐藏表格列', 'false'],
       ['hideInSearch', 'boolean', '是否隐藏搜索项', 'false'],
     ],
@@ -396,15 +500,45 @@ const apiTables: ApiTable[] = [
     rows: [
       ['field', 'string', '表单字段名', 'role'],
       ['component', 'CrudFieldComponent', 'Element 表单组件类型', 'TreeSelect'],
-      ['placeholder', 'string', '输入/选择占位文案，不传时自动生成', '请选择部门'],
+      [
+        'placeholder',
+        'string',
+        '输入/选择占位文案，不传时自动生成',
+        '请选择部门',
+      ],
       ['defaultValue', 'any', '新增或重置时写入的默认值', 'enabled'],
-      ['options', 'CrudOption[]', 'Select/Radio/Checkbox 选项', "[{ label, value }]"],
-      ['props', 'Record<string, any>', '透传给实际 Element 组件', "{ data, filterable: true }"],
+      [
+        'options',
+        'CrudOption[]',
+        'Select/Radio/Checkbox 选项',
+        '[{ label, value }]',
+      ],
+      [
+        'props',
+        'Record<string, any>',
+        '透传给实际 Element 组件',
+        '{ data, filterable: true }',
+      ],
       ['span', 'number', '弹窗表单宽度，24 整行，12 半行', '12'],
       ['width', 'number | string', 'inline 搜索控件宽度', '260'],
-      ['rules', 'FormItemRule[]', 'Element Plus 校验规则', "[{ required: true }]"],
-      ['hidden', 'boolean | (model) => boolean', '按当前表单模型控制显示隐藏', '(model) => !model.type'],
-      ['render', '({ model, schema, field }) => VNode', '使用 TSX 自定义表单项内容', 'render: () => <ElAlert />'],
+      [
+        'rules',
+        'FormItemRule[]',
+        'Element Plus 校验规则',
+        '[{ required: true }]',
+      ],
+      [
+        'hidden',
+        'boolean | (model) => boolean',
+        '按当前表单模型控制显示隐藏',
+        '(model) => !model.type',
+      ],
+      [
+        'render',
+        '({ model, schema, field }) => VNode',
+        '使用 TSX 自定义表单项内容',
+        'render: () => <ElAlert />',
+      ],
     ],
   },
   {
@@ -416,9 +550,19 @@ const apiTables: ApiTable[] = [
       ['inline', 'boolean', '是否启用 inline 表单布局', 'false'],
       ['labelWidth', 'string | number', '表单 label 宽度', '96'],
       ['showActions', 'boolean', '是否显示默认查询/重置按钮组', 'true'],
-      ['collapsible', 'boolean', '是否启用折叠展开', 'false'],
+      [
+        'collapsible',
+        'boolean',
+        '是否启用折叠；false 隐藏折叠按钮并展示全部字段',
+        'false',
+      ],
       ['defaultCollapsed', 'boolean', '首次渲染是否默认收起', 'true'],
-      ['collapsedItemCount', 'number', '收起时保留展示项数量', '3'],
+      [
+        'collapsedItemCount',
+        "number | 'auto'",
+        'inline 时自适应，非 inline 默认 3 项；数字固定数量',
+        'auto',
+      ],
     ],
   },
   {
@@ -431,25 +575,60 @@ const apiTables: ApiTable[] = [
       ['initialValues', 'Partial<T>', '表单初始值，编辑场景用于回填', '{}'],
       ['width', 'string | number', '弹窗宽度', '720'],
       ['labelWidth', 'string | number', '表单 label 宽度', '96'],
-      ['dialogProps', 'Record<string, any>', '透传给 el-dialog 的原生参数', '{}'],
+      [
+        'dialogProps',
+        'Record<string, any>',
+        '透传给 el-dialog 的原生参数',
+        '{}',
+      ],
     ],
   },
   {
     title: 'Hooks',
     columns: ['方法', '返回', '说明', '示例'],
     rows: [
-      ['useTable<T>()', '{ tableRef, reload, openCreate, openEdit, getSearchModel }', '绑定 DynamicTable 实例并封装常用 expose 方法', 'const { tableRef, reload } = useTable<User>()'],
-      ['useForm<T>(initialValues?)', '{ formRef, model, validate, resetFields, setFieldsValue, getFieldsValue }', '管理 SchemaForm 模型和实例方法', "const form = useForm<User>({ status: 'enabled' })"],
-      ['useDialog<T>(defaultValues?)', '{ visible, mode, record, initialValues, openCreate, openEdit, openDetail, close }', '管理新增、编辑、详情弹窗状态', 'const dialog = useDialog<User>()'],
+      [
+        'useTable<T>()',
+        '{ tableRef, reload, openCreate, openEdit, getSearchModel }',
+        '绑定 DynamicTable 实例并封装常用 expose 方法',
+        'const { tableRef, reload } = useTable<User>()',
+      ],
+      [
+        'useForm<T>(initialValues?)',
+        '{ formRef, model, validate, resetFields, setFieldsValue, getFieldsValue }',
+        '管理 SchemaForm 模型和实例方法',
+        "const form = useForm<User>({ status: 'enabled' })",
+      ],
+      [
+        'useDialog<T>(defaultValues?)',
+        '{ visible, mode, record, initialValues, openCreate, openEdit, openDetail, close }',
+        '管理新增、编辑、详情弹窗状态',
+        'const dialog = useDialog<User>()',
+      ],
     ],
   },
   {
     title: 'Request / Mutations',
     columns: ['方法', '签名', '说明', '返回'],
     rows: [
-      ['request', '(params: CrudRequestParams) => CrudListResult | Promise<CrudListResult>', '查询列表，组件自动传入 page、pageSize 和当前搜索条件', '{ list, total }'],
-      ['create', '(values: Partial<T>) => void | Promise<void>', '新增弹窗点击保存后调用', 'void'],
-      ['update', '(values: Partial<T>, row: T) => void | Promise<void>', '编辑弹窗点击保存后调用，row 是编辑前的原始行', 'void'],
+      [
+        'request',
+        '(params: CrudRequestParams) => CrudListResult | Promise<CrudListResult>',
+        '查询列表，组件自动传入 page、pageSize 和当前搜索条件',
+        '{ list, total }',
+      ],
+      [
+        'create',
+        '(values: Partial<T>) => void | Promise<void>',
+        '新增弹窗点击保存后调用',
+        'void',
+      ],
+      [
+        'update',
+        '(values: Partial<T>, row: T) => void | Promise<void>',
+        '编辑弹窗点击保存后调用，row 是编辑前的原始行',
+        'void',
+      ],
       ['remove', '(row: T) => void | Promise<void>', '删除确认后调用', 'void'],
     ],
   },
@@ -457,14 +636,39 @@ const apiTables: ApiTable[] = [
     title: 'Events',
     columns: ['事件名', '参数', '触发时机', '说明'],
     rows: [
-      ['loaded', '(rows, total)', 'request 成功返回后', '可用于统计、埋点或外部同步列表数量'],
+      [
+        'loaded',
+        '(rows, total)',
+        'request 成功返回后',
+        '可用于统计、埋点或外部同步列表数量',
+      ],
       ['created', '(values)', 'create 调用完成后', '返回当前提交的新增表单值'],
       ['updated', '(values, row)', 'update 调用完成后', '返回提交值和原始行'],
       ['removed', '(row)', 'remove 调用完成后', '返回被删除行'],
-      ['action', '(actionName, row, payload?)', 'ACTIONS 插槽中调用 emitAction 时', '统一处理详情/扩展动作'],
-      ['SchemaForm submit', '(values)', 'SchemaForm 默认按钮提交后', '返回表单值'],
-      ['SchemaForm reset', '(values)', 'SchemaForm 默认按钮重置后', '返回重置后的表单值'],
-      ['SchemaFormDialog submit', '(values, done)', '弹窗表单保存后', '异步保存结束后调用 done()'],
+      [
+        'action',
+        '(actionName, row, payload?)',
+        'ACTIONS 插槽中调用 emitAction 时',
+        '统一处理详情/扩展动作',
+      ],
+      [
+        'SchemaForm submit',
+        '(values)',
+        'SchemaForm 默认按钮提交后',
+        '返回表单值',
+      ],
+      [
+        'SchemaForm reset',
+        '(values)',
+        'SchemaForm 默认按钮重置后',
+        '返回重置后的表单值',
+      ],
+      [
+        'SchemaFormDialog submit',
+        '(values, done)',
+        '弹窗表单保存后',
+        '异步保存结束后调用 done()',
+      ],
     ],
   },
   {
@@ -473,16 +677,66 @@ const apiTables: ApiTable[] = [
     rows: [
       ['toolbar-before', '-', '工具栏按钮区域前置插槽', '批量删除按钮'],
       ['toolbar-after', '-', '工具栏按钮区域后置插槽', '导出按钮'],
-      ['searchBefore / searchAfter', '{ model, reload }', '搜索表单前后保留插槽', '搜索摘要'],
-      ['advanceBefore / submitBefore / resetBefore', '{ model, submit, reset, toggleCollapsed, isCollapsed }', '搜索按钮前置插槽', '插入快捷按钮/提示'],
-      ['tableBefore / tableAfter', '{ rows, reload }', '表格前后保留插槽', '统计信息'],
-      ['tableEmpty / tableAppend', '{ reload } / { rows, reload }', '透传给 el-table 的 empty / append 插槽', '空状态或附加内容'],
-      ['cell-{prop}', '{ row, value, index }', '按字段自定义单元格内容', 'cell-status'],
-      ['detail-{field}', '{ record, value, index, schema }', '按字段自定义详情项内容', 'detail-status'],
-      ['ACTIONS', '{ row, index, openEdit, removeRow, emitAction }', '覆盖最后一列固定在右侧的 ACTIONS 操作区', '直接使用 ElButton 或业务按钮组件'],
-      ['dialog-header / dialog-dialogBefore / dialog-dialogAfter / dialog-footer', '见对应槽位作用域', 'DynamicTable 透传到内部 SchemaFormDialog 的保留插槽', '自定义弹窗头部/内容前后/底部'],
-      ['SchemaForm actions', '-', '覆盖默认查询/重置/展开按钮', '自定义搜索按钮'],
-      ['SchemaFormDialog footer', '{ submitting, submit, cancel, close }', '覆盖弹窗底部按钮', '自定义保存按钮'],
+      [
+        'searchBefore / searchAfter',
+        '{ model, reload }',
+        '搜索表单前后保留插槽',
+        '搜索摘要',
+      ],
+      [
+        'advanceBefore / submitBefore / resetBefore',
+        '{ model, submit, reset, toggleCollapsed, isCollapsed }',
+        '搜索按钮前置插槽',
+        '插入快捷按钮/提示',
+      ],
+      [
+        'tableBefore / tableAfter',
+        '{ rows, reload }',
+        '表格前后保留插槽',
+        '统计信息',
+      ],
+      [
+        'tableEmpty / tableAppend',
+        '{ reload } / { rows, reload }',
+        '透传给 el-table 的 empty / append 插槽',
+        '空状态或附加内容',
+      ],
+      [
+        'cell-{prop}',
+        '{ row, value, index }',
+        '按字段自定义单元格内容',
+        'cell-status',
+      ],
+      [
+        'detail-{field}',
+        '{ record, value, index, schema }',
+        '按字段自定义详情项内容',
+        'detail-status',
+      ],
+      [
+        'ACTIONS',
+        '{ row, index, openEdit, removeRow, emitAction }',
+        '覆盖最后一列固定在右侧的 ACTIONS 操作区',
+        '直接使用 ElButton 或业务按钮组件',
+      ],
+      [
+        'dialog-header / dialog-dialogBefore / dialog-dialogAfter / dialog-footer',
+        '见对应槽位作用域',
+        'DynamicTable 透传到内部 SchemaFormDialog 的保留插槽',
+        '自定义弹窗头部/内容前后/底部',
+      ],
+      [
+        'SchemaForm actions',
+        '-',
+        '覆盖默认查询/重置/展开按钮',
+        '自定义搜索按钮',
+      ],
+      [
+        'SchemaFormDialog footer',
+        '{ submitting, submit, cancel, close }',
+        '覆盖弹窗底部按钮',
+        '自定义保存按钮',
+      ],
     ],
   },
   {
@@ -500,30 +754,112 @@ const apiTables: ApiTable[] = [
 ];
 
 const elementPlusLinks: ElementPlusLink[] = [
-  { component: 'Input / Textarea / InputPassword', native: 'el-input', url: 'https://element-plus.org/en-US/component/input' },
-  { component: 'InputNumber', native: 'el-input-number', url: 'https://element-plus.org/en-US/component/input-number' },
-  { component: 'Select', native: 'el-select', url: 'https://element-plus.org/en-US/component/select' },
-  { component: 'TreeSelect', native: 'el-tree-select', url: 'https://element-plus.org/en-US/component/tree-select' },
-  { component: 'Cascader', native: 'el-cascader', url: 'https://element-plus.org/en-US/component/cascader' },
-  { component: 'DatePicker', native: 'el-date-picker', url: 'https://element-plus.org/en-US/component/date-picker' },
-  { component: 'TimePicker', native: 'el-time-picker', url: 'https://element-plus.org/en-US/component/time-picker' },
-  { component: 'TimeSelect', native: 'el-time-select', url: 'https://element-plus.org/en-US/component/time-select' },
-  { component: 'RadioGroup', native: 'el-radio-group', url: 'https://element-plus.org/en-US/component/radio' },
-  { component: 'CheckboxGroup', native: 'el-checkbox-group', url: 'https://element-plus.org/en-US/component/checkbox' },
-  { component: 'Switch', native: 'el-switch', url: 'https://element-plus.org/en-US/component/switch' },
-  { component: 'Slider', native: 'el-slider', url: 'https://element-plus.org/en-US/component/slider' },
-  { component: 'Rate', native: 'el-rate', url: 'https://element-plus.org/en-US/component/rate' },
-  { component: 'ColorPicker', native: 'el-color-picker', url: 'https://element-plus.org/en-US/component/color-picker' },
-  { component: 'Progress', native: 'el-progress', url: 'https://element-plus.org/en-US/component/progress' },
-  { component: 'Descriptions', native: 'el-descriptions', url: 'https://element-plus.org/en-US/component/descriptions' },
-  { component: 'Table', native: 'el-table', url: 'https://element-plus.org/en-US/component/table' },
-  { component: 'Pagination', native: 'el-pagination', url: 'https://element-plus.org/en-US/component/pagination' },
-  { component: 'Dialog', native: 'el-dialog', url: 'https://element-plus.org/en-US/component/dialog' },
-  { component: 'Form / FormItem', native: 'el-form', url: 'https://element-plus.org/en-US/component/form' },
+  {
+    component: 'Input / Textarea / InputPassword',
+    native: 'el-input',
+    url: 'https://element-plus.org/en-US/component/input',
+  },
+  {
+    component: 'InputNumber',
+    native: 'el-input-number',
+    url: 'https://element-plus.org/en-US/component/input-number',
+  },
+  {
+    component: 'Select',
+    native: 'el-select',
+    url: 'https://element-plus.org/en-US/component/select',
+  },
+  {
+    component: 'TreeSelect',
+    native: 'el-tree-select',
+    url: 'https://element-plus.org/en-US/component/tree-select',
+  },
+  {
+    component: 'Cascader',
+    native: 'el-cascader',
+    url: 'https://element-plus.org/en-US/component/cascader',
+  },
+  {
+    component: 'DatePicker',
+    native: 'el-date-picker',
+    url: 'https://element-plus.org/en-US/component/date-picker',
+  },
+  {
+    component: 'TimePicker',
+    native: 'el-time-picker',
+    url: 'https://element-plus.org/en-US/component/time-picker',
+  },
+  {
+    component: 'TimeSelect',
+    native: 'el-time-select',
+    url: 'https://element-plus.org/en-US/component/time-select',
+  },
+  {
+    component: 'RadioGroup',
+    native: 'el-radio-group',
+    url: 'https://element-plus.org/en-US/component/radio',
+  },
+  {
+    component: 'CheckboxGroup',
+    native: 'el-checkbox-group',
+    url: 'https://element-plus.org/en-US/component/checkbox',
+  },
+  {
+    component: 'Switch',
+    native: 'el-switch',
+    url: 'https://element-plus.org/en-US/component/switch',
+  },
+  {
+    component: 'Slider',
+    native: 'el-slider',
+    url: 'https://element-plus.org/en-US/component/slider',
+  },
+  {
+    component: 'Rate',
+    native: 'el-rate',
+    url: 'https://element-plus.org/en-US/component/rate',
+  },
+  {
+    component: 'ColorPicker',
+    native: 'el-color-picker',
+    url: 'https://element-plus.org/en-US/component/color-picker',
+  },
+  {
+    component: 'Progress',
+    native: 'el-progress',
+    url: 'https://element-plus.org/en-US/component/progress',
+  },
+  {
+    component: 'Descriptions',
+    native: 'el-descriptions',
+    url: 'https://element-plus.org/en-US/component/descriptions',
+  },
+  {
+    component: 'Table',
+    native: 'el-table',
+    url: 'https://element-plus.org/en-US/component/table',
+  },
+  {
+    component: 'Pagination',
+    native: 'el-pagination',
+    url: 'https://element-plus.org/en-US/component/pagination',
+  },
+  {
+    component: 'Dialog',
+    native: 'el-dialog',
+    url: 'https://element-plus.org/en-US/component/dialog',
+  },
+  {
+    component: 'Form / FormItem',
+    native: 'el-form',
+    url: 'https://element-plus.org/en-US/component/form',
+  },
 ];
 
 function scrollToSection(id: string) {
   activeSection.value = id;
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document
+    .getElementById(id)
+    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 </script>

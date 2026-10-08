@@ -1,34 +1,42 @@
 {
   "name": "@mercerry/element-crud",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "author": "mercerry <mercerry@outlook.com>",
   "description": "A Vue 3 and Element Plus configuration-driven CRUD component library.",
   "type": "module",
-  "main": "dist/element-crud.umd.js",
+  "main": "dist/element-crud.umd.cjs",
   "module": "dist/element-crud.es.js",
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/element-crud.es.js",
-      "require": "./dist/element-crud.umd.js"
+      "require": "./dist/element-crud.umd.cjs"
     },
     "./dist/style.css": "./dist/style.css"
   },
   "files": [
-    "dist"
+    "dist/element-crud.es.js",
+    "dist/element-crud.umd.cjs",
+    "dist/style.css",
+    "dist/types",
+    "docs/usage.md"
   ],
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
-    "build:lib": "vue-tsc --declaration --emitDeclarationOnly --outDir dist/types --noEmit false && vite build --config vite.lib.config.ts"
+    "build:lib": "node scripts/clean-lib.mjs && vue-tsc -p tsconfig.lib.json --declaration --emitDeclarationOnly --outDir dist/types --noEmit false && vite build --config vite.lib.config.ts",
+    "test": "pnpm test:unit && vitest run",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.tests.json",
+    "test:unit": "node --experimental-strip-types --test tests/*.test.mjs",
+    "lint": "eslint src tests scripts *.ts *.mjs",
+    "format:check": "prettier --check src tests scripts *.ts *.json *.mjs",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build:lib"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.1.0",
-    "element-plus": "^2.4.0",
-    "lodash.clonedeep": "^4.5.0",
-    "vue": "^3.3.0"
+    "lodash.clonedeep": "^4.5.0"
   },
   "devDependencies": {
     "@types/lodash.clonedeep": "^4.5.9",
@@ -39,7 +47,17 @@
     "typescript": "5.3.3",
     "vite": "^5.0.0",
     "vue-router": "^4.2.0",
-    "vue-tsc": "^1.8.0"
+    "vue-tsc": "^1.8.0",
+    "vue": "3.5.42",
+    "element-plus": "2.14.5",
+    "vitest": "3.2.7",
+    "@vue/test-utils": "2.5.0",
+    "jsdom": "26.1.0",
+    "eslint": "10.9.1",
+    "typescript-eslint": "8.69.0",
+    "eslint-plugin-vue": "10.10.0",
+    "vue-eslint-parser": "10.4.1",
+    "prettier": "3.9.8"
   },
   "peerDependencies": {
     "element-plus": "^2.4.0",

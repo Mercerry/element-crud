@@ -1,4 +1,9 @@
-import type { App } from 'vue';
+import type { App, MaybeRefOrGetter } from 'vue';
+import {
+  installCrudConfig,
+  type CrudConfig,
+} from './components/element-crud/config';
+export * from './components/element-crud/config';
 import DynamicTable from './components/element-crud/DynamicTable.vue';
 import DynamicDetail from './components/element-crud/DynamicDetail.vue';
 import SchemaForm from './components/element-crud/SchemaForm.vue';
@@ -19,7 +24,8 @@ export {
 };
 
 export default {
-  install(app: App) {
+  install(app: App, config: MaybeRefOrGetter<CrudConfig> = {}) {
+    installCrudConfig(app, config);
     app.component('DynamicTable', DynamicTable);
     app.component('DynamicDetail', DynamicDetail);
     app.component('SchemaForm', SchemaForm);

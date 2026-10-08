@@ -19,7 +19,8 @@ export default defineConfig({
     lib: {
       entry: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
       name: 'DynamicCrud',
-      fileName: (format) => `element-crud.${format}.js`,
+      fileName: (format) =>
+        `element-crud.${format}.${format === 'umd' ? 'cjs' : 'js'}`,
     },
     rollupOptions: {
       external: ['vue', 'element-plus', '@element-plus/icons-vue'],
