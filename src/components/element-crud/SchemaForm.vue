@@ -10,6 +10,7 @@
     :fields-layout="fieldsLayout"
     :gutter="gutter"
     :label-width="labelWidth"
+    :submit-on-enter="submitOnEnter"
     :show-actions="showActions"
     :collapsible="collapsible"
     :default-collapsed="defaultCollapsed"
@@ -40,6 +41,8 @@ const props = withDefaults(
     fieldsLayout?: 'wrapped' | 'contents';
     gutter?: number;
     labelWidth?: string | number;
+    /** 单行输入框回车提交，默认启用。 */
+    submitOnEnter?: boolean;
     showActions?: boolean;
     collapsible?: boolean;
     defaultCollapsed?: boolean;
@@ -51,6 +54,7 @@ const props = withDefaults(
     fieldsLayout: 'wrapped',
     gutter: 16,
     labelWidth: 96,
+    submitOnEnter: true,
     showActions: true,
     collapsible: false,
     defaultCollapsed: true,

@@ -378,3 +378,20 @@ installCrudConfig(app, config);
 搜索与编辑默认两列，xs=24；设置 span/colProps 控制列数和响应式行为，gutter 控制列间距。旧 schema.width 保留类型兼容，但栅格宽度以 span/colProps 为准；控件独立限宽请使用 props.style。fieldsLayout=contents 仍由宿主负责布局。
 
 库内测试覆盖请求竞态、查询快照、切页折叠、弹窗锁与失效回调、动态字段、嵌套校验、删除取消/失败、远程排序、Promise 提交、详情及配置隔离。编译期负例确认错误 Select 属性不能通过；CI 与本地共用 pnpm check。
+
+
+## 回车提交
+
+`SchemaForm` / `SchemaFormBase` / `SchemaFormDialog` 提供 `submitOnEnter`，默认 `true`。开启后，普通单行输入框的 Enter 会执行原有校验，成功后触发 `submit`；弹窗继续使用原有保存请求和提交锁。关闭时查询/保存按钮仍正常工作。
+
+```vue
+<SchemaForm v-model="model" :schemas="schemas" @submit="handleSearch" />
+<SchemaFormDialog v-model="visible" title="编辑" :schemas="schemas" :submit-request="save" />
+<DynamicTable :columns="columns" :request="request" :search-submit-on-enter="true" :form-submit-on-enter="false" />
+```
+
+`DynamicTable.searchSubmitOnEnter` 控制搜索区，`formSubmitOnEnter` 控制内置编辑弹窗，二者默认均为 `true`。配置支持运行时切换，与折叠开关独立。升级接入后应删除字段中重复的 `onKeyup` 回车查询回调，将查询统一绑定到表单 `submit`，避免重复请求。
+
+文本域、只读/禁用输入、输入法组词、长按重复、组合键和下拉/日期/自动完成控件的确认操作不会触发回车提交。自定义组合输入控件应使用 `role="combobox"`，或在自身键盘事件中调用 `preventDefault()` / `stopPropagation()`；原生 form 默认提交始终被拦截，不会刷新页面。表单负责校验期间防重，普通表单的异步请求状态由业务处理，弹窗则沿用库内提交锁。
+
+关闭单个表单的回车提交：`<SchemaForm :submit-on-enter="false" ... />`。表格搜索和编辑分别传 `:search-submit-on-enter="false"`、`:form-submit-on-enter="false"`。

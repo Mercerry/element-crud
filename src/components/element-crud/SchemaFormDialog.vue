@@ -35,6 +35,8 @@
       :schemas="schemas"
       :label-width="labelWidth"
       :show-actions="false"
+      :submit-on-enter="submitOnEnter && !locked"
+      @submit="submit"
     >
       <template v-for="(_, name) in $slots" #[name]="slotData" :key="name">
         <slot :name="name" v-bind="slotData || {}" />
@@ -102,6 +104,8 @@ const props = withDefaults(
     initialValues?: Partial<T>;
     width?: string | number;
     labelWidth?: string | number;
+    /** 单行输入框回车提交，默认启用。 */
+    submitOnEnter?: boolean;
     draggable?: boolean;
     autoCloseOnSubmit?: boolean;
     submitRequest?: (values: Partial<T>) => Promise<void> | void;
@@ -119,6 +123,7 @@ const props = withDefaults(
     initialValues: () => ({}),
     width: 720,
     labelWidth: 96,
+    submitOnEnter: true,
     draggable: true,
     autoCloseOnSubmit: true,
     showCancelButton: true,

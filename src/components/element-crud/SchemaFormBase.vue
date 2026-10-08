@@ -10,6 +10,7 @@
     :inline="inline"
     :model="innerModel"
     :label-width="labelWidth"
+    @keydown="handleEnter"
     @submit.prevent
   >
     <slot
@@ -342,6 +343,8 @@ const props = withDefaults(
     fieldsLayout?: 'wrapped' | 'contents';
     gutter?: number;
     labelWidth?: string | number;
+    /** 单行输入框回车提交，默认启用。 */
+    submitOnEnter?: boolean;
     showActions?: boolean;
     collapsible?: boolean;
     defaultCollapsed?: boolean;
@@ -355,6 +358,7 @@ const props = withDefaults(
     fieldsLayout: 'wrapped',
     gutter: 16,
     labelWidth: 96,
+    submitOnEnter: true,
     showActions: true,
     collapsible: false,
     defaultCollapsed: true,
@@ -814,12 +818,49 @@ const validateField: FormInstance['validateField'] = async (
   if (callback) await callback(true);
   return true;
 };
+// 仅处理普通单行输入，保留下拉确认、文本换行和输入法候选确认。
+function handleEnter(event: KeyboardEvent) {
+  if (
+    !props.submitOnEnter ||
+    event.key !== 'Enter' ||
+    event.defaultPrevented ||
+    event.isComposing ||
+    event.keyCode === 229 ||
+    event.repeat ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.altKey ||
+    event.shiftKey
+  )
+    return;
+  const target = event.target;
+  if (
+    !(target instanceof HTMLInputElement) ||
+    target.disabled ||
+    target.readOnly ||
+    !['text', 'password', 'search', 'email', 'url', 'tel', 'number'].includes(
+      target.type,
+    ) ||
+    target.closest(
+      '[role="combobox"], .el-select, .el-autocomplete, .el-cascader, .el-date-editor, .el-input-tag',
+    )
+  )
+    return;
+  event.preventDefault();
+  void submit();
+}
+
+let validatingSubmit = false;
 async function submit() {
+  if (validatingSubmit) return;
+  validatingSubmit = true;
   try {
     await validate();
     emit('submit', cloneDeep({ ...innerModel }));
   } catch {
     /* 错误已呈现在字段上，模板事件不产生未处理拒绝。 */
+  } finally {
+    validatingSubmit = false;
   }
 }
 

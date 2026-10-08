@@ -13,6 +13,7 @@
         :collapsed-item-count="searchCollapsedItemCount"
         :default-collapsed="searchDefaultCollapsed"
         :label-width="searchLabelWidth"
+        :submit-on-enter="searchSubmitOnEnter"
         @submit="handleSearch"
         @reset="handleSearchReset"
       >
@@ -205,6 +206,7 @@
       :initial-values="dialogInitialValues"
       :width="dialogWidth"
       :label-width="formLabelWidth"
+      :submit-on-enter="formSubmitOnEnter"
       @submit="submitDialog"
     >
       <template
@@ -322,6 +324,8 @@ const props = withDefaults(
     showIndex?: boolean;
     dialogWidth?: string | number;
     searchLabelWidth?: string | number;
+    searchSubmitOnEnter?: boolean;
+    formSubmitOnEnter?: boolean;
     formLabelWidth?: string | number;
     searchCollapsible?: boolean;
     searchDefaultCollapsed?: boolean;
@@ -358,6 +362,8 @@ const props = withDefaults(
     searchCollapsible: true,
     searchDefaultCollapsed: true,
     searchCollapsedItemCount: 'auto',
+    searchSubmitOnEnter: true,
+    formSubmitOnEnter: true,
     tableProps: () => ({}),
   },
 );

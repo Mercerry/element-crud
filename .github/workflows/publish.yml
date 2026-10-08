@@ -1,0 +1,66 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  # npm Trusted Publisher 通过 OIDC 获取短期发布凭证，无需 NPM_TOKEN。
+  id-token: write
+
+concurrency:
+  group: npm-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Node 22 自带的 npm 可能不支持 OIDC，显式安装支持该功能的 npm 11。
+      - name: Install npm with OIDC support
+        run: npm install --global npm@11
+
+      - name: Validate release version
+        id: version
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
+          if (process.env.GITHUB_REF_NAME !== `v${version}`) {
+            throw new Error(`发布标签必须与 package.json 版本一致：v${version}`);
+          }
+          // 预发布版本使用 next，避免覆盖正式版本的 latest 标签。
+          const tag = version.includes('-') ? 'next' : 'latest';
+          appendFileSync(process.env.GITHUB_OUTPUT, `tag=${tag}\n`);
+          NODE
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # check 已包含类型检查、代码规范、测试和库构建。
+      - name: Check and build package
+        run: pnpm check
+
+      - name: Inspect package contents
+        run: npm pack --dry-run
+
+      # npm 页面 Environment name 留空，与本工作流不设置 environment 对应。
+      - name: Publish package
+        run: npm publish --access public --tag "${{ steps.version.outputs.tag }}"

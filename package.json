@@ -1,6 +1,10 @@
 {
   "name": "@mercerry/element-crud",
-  "version": "0.2.1",
+  "version": "0.2.2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mercerry/element-crud.git"
+  },
   "author": "mercerry <mercerry@outlook.com>",
   "description": "A Vue 3 and Element Plus configuration-driven CRUD component library.",
   "type": "module",
